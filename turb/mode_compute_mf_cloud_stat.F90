@@ -135,24 +135,17 @@ IF (KRRL > 0)  THEN
     CALL MZM_MF(D, PTHLM, ZFLXZ)
     CALL GZ_M_W_MF(D, PTHLM, PDZZ, ZWK)
     IF (OSTATNW) THEN
-<<<<<<< HEAD
       IF (OTAUCONV) THEN
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
             ZFLXZ(JIJ, JK) = -2 * PTAUFUNC(JIJ, JK) * PEMF(JIJ, JK)* &
                                  & (PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * ZWK(JIJ, JK)
           END DO
-=======
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          ZFLXZ(JIJ, JK) = -2 * PXCTV(JIJ)* PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
-                               & (PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * ZWK(JIJ, JK)
->>>>>>> c625cc3a (Add turbulence and shallow convection SPP.)
         END DO
       ELSE
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
-            ZFLXZ(JIJ, JK) = -2 * TURBN%XCTV* PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
+            ZFLXZ(JIJ, JK) = -2 * PXCTV(JIJ)* PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
                                  & (PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * ZWK(JIJ, JK)
           END DO
         END DO
@@ -160,7 +153,7 @@ IF (KRRL > 0)  THEN
     ELSE
       DO JK=1, IKT
         DO JIJ=IIJB, IIJE
-          ZFLXZ(JIJ, JK) = -2  *PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
+          ZFLXZ(JIJ, JK) = -2 * PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
                                & (PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * ZWK(JIJ, JK)
         END DO
       END DO
@@ -191,24 +184,17 @@ IF (KRRL > 0)  THEN
     CALL MZM_MF(D, PRTM, ZFLXZ2)
     CALL GZ_M_W_MF(D, PRTM, PDZZ, ZWK2)
     IF (OSTATNW) THEN
-<<<<<<< HEAD
       IF (OTAUCONV) THEN
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
             ZFLXZ2(JIJ, JK) = -2 * PTAUFUNC(JIJ, JK) * PEMF(JIJ, JK)* &
                                  & (PRT_UP(JIJ, JK)-ZFLXZ2(JIJ, JK)) * ZWK2(JIJ, JK)
           END DO
-=======
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          ZFLXZ2(JIJ, JK) = -2 * PXCTV(JIJ) * PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
-                               & (PRT_UP(JIJ, JK)-ZFLXZ2(JIJ, JK)) * ZWK2(JIJ, JK)
->>>>>>> c625cc3a (Add turbulence and shallow convection SPP.)
         END DO
       ELSE
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
-            ZFLXZ2(JIJ, JK) = -2 * TURBN%XCTV * PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
+            ZFLXZ2(JIJ, JK) = -2 * PXCTV(JIJ) * PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
                                  & (PRT_UP(JIJ, JK)-ZFLXZ2(JIJ, JK)) * ZWK2(JIJ, JK)
           END DO
         END DO
@@ -239,7 +225,6 @@ IF (KRRL > 0)  THEN
       !wc Now including convection covariance contribution in case of OSTATNW=TRUE
       !
       !       1.2.2 contribution from <Rnp Thl>
-<<<<<<< HEAD
       IF (OTAUCONV) THEN
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
@@ -249,20 +234,11 @@ IF (KRRL > 0)  THEN
                                           PEMF(JIJ, JK)*(PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * &
                                           ZWK2(JIJ, JK))
           END DO
-=======
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          ZFLXZ3(JIJ, JK) = - PXCTV(JIJ) * PARAMMF%XTAUSIGMF * &
-                        (PEMF(JIJ, JK)*(PRT_UP(JIJ, JK)-ZFLXZ2(JIJ, JK)) * &
-                                       ZWK(JIJ, JK) + &
-                                       PEMF(JIJ, JK)*(PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * &
-                                       ZWK2(JIJ, JK))
->>>>>>> c625cc3a (Add turbulence and shallow convection SPP.)
         END DO
       ELSE
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
-            ZFLXZ3(JIJ, JK) = - TURBN%XCTV * PARAMMF%XTAUSIGMF * &
+            ZFLXZ3(JIJ, JK) = - PXCTV(JIJ) * PARAMMF%XTAUSIGMF * &
                           (PEMF(JIJ, JK)*(PRT_UP(JIJ, JK)-ZFLXZ2(JIJ, JK)) * &
                                          ZWK(JIJ, JK) + &
                                          PEMF(JIJ, JK)*(PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * &
