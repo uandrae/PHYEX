@@ -300,6 +300,7 @@ CALL RAIN_ICE_PART1 ( D, CST, PARAMI, ICEP, ICED, ELECP, ELECD, BUCONF,     &
                       PTHT, PRT, PTHS, PRS,                                 &
                       PINPRC, PINPRR, PEVAP3D,                              &
                       PINPRS, PINPRG, PRAINFR, PSIGS,               &
+                      PRCRIAUTI, PRCRIAUTC,                                 &
                       TBUDGETS, KBUDGETS,                                   &
                        PQCT, PQRT, PQIT, PQST, PQGT,           &
                        PQCS, PQRS, PQIS, PQSS, PQGS,           &
@@ -307,7 +308,8 @@ CALL RAIN_ICE_PART1 ( D, CST, PARAMI, ICEP, ICED, ELECP, ELECD, BUCONF,     &
                       PSEA, PTOWN, PCONC3D,                                 &
                       PINPRH, PFPR, PQHT, PQHS,                             &
                       ZT, ZZ_LVFACT, ZZ_LSFACT, ZWR, ZWTH, ZCONC3D, LLMICRO,&
-                      ZZ_RVHENI, ZZZZ )
+                      ZZ_RVHENI, ZZZZ)
+
 !
 IKTB=D%NKTB
 IKTE=D%NKTE

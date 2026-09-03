@@ -111,10 +111,10 @@ REAL, DIMENSION(:,:), INTENT(IN)        ::  PTURB_SPP    ! SPP for turbulence
 !*       0.2  declaration of local variables
 !
 REAL, DIMENSION(D%NIT,D%NJT,D%NKT)       &
-                                     :: ZFLX, ZA, ZWKLES, ZCSV, ZCSV2
+                                     :: ZFLX, ZA, ZWKLES
 !
 INTEGER             :: JSV          ! loop counter
-INTEGER             :: IKU, IIT, IJT, IKT, JJ, ZZ
+INTEGER             :: IKU, IIT, IJT, IKT, ZZ
 !
 REAL :: ZTIME1, ZTIME2
 !
@@ -130,7 +130,7 @@ REAL, DIMENSION(D%NIT,D%NJT,D%NKT) ::ZGY_M_M3D_WORK2
 INTEGER :: JI
 INTEGER :: JK
 INTEGER :: JJ
-REAL :: ZCSV          !constant for the scalar flux 
+REAL, DIMENSION(D%NIT,D%NJT,D%NKT) :: ZCSV, ZCSV2  !constant for the scalar flux 
 ! ---------------------------------------------------------------------------
 !
 IKU=SIZE(PTKEM,3)
