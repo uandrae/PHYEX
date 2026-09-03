@@ -13,6 +13,7 @@
                                    PTHT, PRT, PTHS, PRS,                                 &
                                    PINPRC, PINPRR, PEVAP3D,                              &
                                    PINPRS, PINPRG, PRAINFR, PSIGS,               &
+                                   PRCRIAUTI,PRCRIAUTC,                                  &
                                    TBUDGETS, KBUDGETS,                                   &
                                    PQCT, PQRT, PQIT, PQST, PQGT,           &
                                    PQCS, PQRS, PQIS, PQSS, PQGS,           &
@@ -20,7 +21,8 @@
                                    PSEA, PTOWN, PCONC3D,                                 &
                                    PINPRH, PFPR, PQHT, PQHS,                             &
                                    PT, PLVFACT, PLSFACT, PWR, PWTH, PZCONC3D, OMICRO,    &
-                                   PRVHENI, PZZZZ )
+                                   PRVHENI, PZZZZ)
+
 !     #############################################################################
 !
 !!****  * -  compute the explicit microphysical sources
@@ -222,6 +224,7 @@ REAL, DIMENSION(D%NIJT), INTENT(OUT)       :: PINPRS! Snow instant precip
 REAL, DIMENSION(D%NIJT), INTENT(OUT)       :: PINPRG! Graupel instant precip
 REAL, DIMENSION(D%NIJT,D%NKT),   INTENT(OUT) :: PRAINFR !Precipitation fraction
 REAL, DIMENSION(D%NIJT,D%NKT),   INTENT(IN)    :: PSIGS   ! Sigma_s at t
+REAL, DIMENSION(D%NIJT), INTENT(IN) :: PRCRIAUTI,PRCRIAUTC
 !
 TYPE(TBUDGETDATA_PTR), DIMENSION(KBUDGETS), INTENT(INOUT) :: TBUDGETS
 INTEGER, INTENT(IN) :: KBUDGETS
@@ -564,7 +567,8 @@ IF (PARAMI%CSUBG_RC_RR_ACCR=='PRFR' .OR. PARAMI%CSUBG_RR_EVAP=='PRFR') THEN
                         PCLDFR(:,IKTB:IKTE), PT(:,IKTB:IKTE), ZSIGMA_RC(:,IKTB:IKTE), &
                         PHLC_HCF(:,IKTB:IKTE), ZHLC_LCF(:,IKTB:IKTE), PHLC_HRC(:,IKTB:IKTE), ZHLC_LRC(:,IKTB:IKTE), &
                         PHLI_HCF(:,IKTB:IKTE), ZHLI_LCF(:,IKTB:IKTE), PHLI_HRI(:,IKTB:IKTE), ZHLI_LRI(:,IKTB:IKTE), &
-                        PRAINFR(:,IKTB:IKTE))
+                        PRAINFR(:,IKTB:IKTE),PRCRIAUTI(IKTB:IKTE), PRCRIAUTC(IKTB:IKTE))
+
   IF (KRR==7) THEN
     CALL ICE4_RAINFR_VERT(D, ICED, PRAINFR, PWR(:,:,IRR), &
                          &PWR(:,:,IRS), PWR(:,:,IRG), PWR(:,:,IRH))
