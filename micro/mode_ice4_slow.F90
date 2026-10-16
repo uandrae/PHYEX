@@ -93,16 +93,15 @@ IF (LHOOK) CALL DR_HOOK('ICE4_SLOW', 0, ZHOOK_HANDLE)
 !
 !*       3.1  Tuning possibilties (only for OCND2)
 
-ZREDGR  = 1.      ! Tuning of the deposition of graupel, 1. is ref. value
+ZREDGR  = 1.      ! Tuning of the deposition of graupel, 1. is ref. value 
 ZREDSN  = 1.      ! Tuning of the deposition of snow, 1. is ref. value
 
 IF(PARAMI%LOCND2) THEN
   IF(.NOT. PARAMI%LMODICEDEP) THEN
-    ZREDGR  = ICEP%XFRMIN(39)  ! Tuning factor, may be /= 1.
+    ZREDGR  = ICEP%XFRMIN(39)  ! Tuning factor, may be /= 1. 
     ZREDSN  = ICEP%XFRMIN(40)  ! Tuning factor, may be /= 1.
   ENDIF
 ENDIF
-
 
 !Cloud water split between high and low content part is done according to autoconversion option
 IF(PARAMI%LCRIAUTI) THEN
@@ -238,7 +237,7 @@ DO JL=1, KSIZE
   ELSE
     PRVDEPG(JL) = 0.
   ENDIF
-  PRVDEPG(JL) = PRVDEPG(JL)*PRDEPGRED(JL)
+! PRVDEPG(JL) = PRVDEPG(JL)*PRDEPGRED(JL)
 ENDDO
 !$mnh_end_do()
 

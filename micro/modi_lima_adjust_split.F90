@@ -18,7 +18,7 @@ INTERFACE
                              PRCRIAUTI, PRCRIAUTC,                              &
                              PICE_CLD_WGT, PWEIGHT_MF_CLOUD,                    &
                              PHLC_HRC, PHLC_HCF, PHLI_HRI, PHLI_HCF,            &
-                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF)
+                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF )
 !
 !USE MODD_IO,    ONLY: TFILEDATA
 USE MODD_DIMPHYEX,       ONLY: DIMPHYEX_T

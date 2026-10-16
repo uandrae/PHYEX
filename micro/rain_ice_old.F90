@@ -399,6 +399,7 @@ REAL            :: ZRVSOLD, ZTSP
 REAL            :: ZRSP, ZRISOLD, ZRSSOLD, ZRGSOLD ! Function,old ice
 REAL            :: ZRISFRC, ZRSSFRC, ZRGSFRC, ZRFRAC, ZRSA, ZRSTS, ZRSB, ZRSDIF, ZR20
 REAL            :: ZRSI, ZRSW, ZDICRIT, ZCITRED23, ZCITRED, ZRCW, ZVT, ZST
+REAL            :: ZREDGR, ZREDSN    ! Possible reduction of the rate of graupel,snow growth
 REAL            :: ZKVO  ! factor used for caluclate maximum mass in the ice
                          ! distubution.
 !    *******  end logical switch OCND2 *******
@@ -448,6 +449,17 @@ IF (LMODICEDEP) THEN
   ZKVO =  ZKVO/ZDICRIT/ICEP%XFRMIN(14)
 ENDIF
 
+ZREDGR  = 1.      ! Tuning of the deposition of graupel, 1. is ref. value
+
+ZREDSN  = 1.      ! Tuning of the deposition of snow, 1. is ref. value
+
+IF(OCND2) THEN
+  IF (.NOT. LMODICEDEP) THEN
+    ZREDGR  = ICEP%XFRMIN(39)  ! Tuning factor, may be /= 1.
+    ZREDSN  = ICEP%XFRMIN(40)  ! Tuning factor, may be /= 1.
+  ENDIF
+ENDIF
+
 LTIW=.FALSE.
 IF (NINT(ICEP%XFRMIN(18)) == 1) LTIW=.TRUE.
 
@@ -489,21 +501,31 @@ IF (OSEDIC.OR.OCND2) THEN
     ! Assume "average" distr. func for simplicity
     DO JK = D%NKTB,D%NKTE
       DO JIJ = D%NIJB,D%NIJE
-        ZLBC(JIJ,JK)   = 0.5* (ZXLBC2(JIJ)+ZXLBC1(JIJ)) 
-        ZFSEDC(JIJ,JK) = 0.5* (ZZFSEDC2(JIJ)+ZZFSEDC1(JIJ))
-        ZFSEDC(JIJ,JK) = MAX(MIN(ZZFSEDC1(JIJ),ZZFSEDC2(JIJ)),ZFSEDC(JIJ,JK))
-        ZRAY(JIJ,JK)   = 0.5*( 0.5*GAMMA(PRZNUC(JIJ)+1.0/ICED%XALPHAC)/(GAMMA(PRZNUC(JIJ))) + &
-          0.5*GAMMA(ICED%XNUC2+1.0/PALPHAC2(JIJ))/(GAMMA(ICED%XNUC2)))
-      ENDDO
+        ZLBC(JIJ,JK)   = 0.5* (ICED%XLBC(2)+ICED%XLBC(1)) 
+        ZFSEDC(JIJ,JK) = 0.5* (ICEP%XFSEDC(2)+ICEP%XFSEDC(1))
+        ZFSEDC(JIJ,JK) = MAX(MIN(ICEP%XFSEDC(1),ICEP%XFSEDC(2)),ZFSEDC(JIJ,JK))
+        ZRAY(JIJ,JK)   = 0.5*( 0.5*GAMMA(ICED%XNUC+1.0/ICED%XALPHAC)/(GAMMA(ICED%XNUC)) + &
+          0.5*GAMMA(ICED%XNUC2+1.0/ICED%XALPHAC2)/(GAMMA(ICED%XNUC2)))
+!       ZLBC(JIJ,JK)   = 0.5* (ZXLBC2(JIJ)+ZXLBC1(JIJ)) 
+!       ZFSEDC(JIJ,JK) = 0.5* (ZZFSEDC2(JIJ)+ZZFSEDC1(JIJ))
+!       ZFSEDC(JIJ,JK) = MAX(MIN(ZZFSEDC1(JIJ),ZZFSEDC2(JIJ)),ZFSEDC(JIJ,JK))
+!       ZRAY(JIJ,JK)   = 0.5*( 0.5*GAMMA(PRZNUC(JIJ)+1.0/ICED%XALPHAC)/(GAMMA(PRZNUC(JIJ))) + &
+!         0.5*GAMMA(ICED%XNUC2+1.0/PALPHAC2(JIJ))/(GAMMA(ICED%XNUC2)))
+      ENDO
     ENDDO
   ELSE
     DO JK=D%NKTB,D%NKTE
       DO JIJ = D%NIJB,D%NIJE
-        ZLBC(JIJ,JK)   = PSEA(JIJ)*ZXLBC2(JIJ) + (1.-PSEA(JIJ))*ZXLBC1(JIJ)
-        ZFSEDC(JIJ,JK) = (PSEA(JIJ)*ZZFSEDC2(JIJ) + (1.-PSEA(JIJ))*ZZFSEDC1(JIJ))
-        ZFSEDC(JIJ,JK) = MAX(MIN(ZZFSEDC1(JIJ),ZZFSEDC2(JIJ)),ZFSEDC(JIJ,JK))
-        ZRAY(JIJ,JK)   = 0.5*((1.-PSEA(JIJ))*GAMMA(PRZNUC(JIJ) + 1.0/ICED%XALPHAC)/(GAMMA(PRZNUC(JIJ))) &
-                     & + PSEA(JIJ)*GAMMA(ICED%XNUC2+1.0/PALPHAC2(JIJ))/(GAMMA(ICED%XNUC2)))
+        ZLBC(JIJ,JK)   = PSEA(JIJ)*ICED%XLBC(2) + (1.-PSEA(JIJ))*ICED%XLBC(1)
+        ZFSEDC(JIJ,JK) = (PSEA(JIJ)*ICEP%XFSEDC(2) + (1.-PSEA(JIJ))*ICEP%XFSEDC(1))
+        ZFSEDC(JIJ,JK) = MAX(MIN(ICEP%XFSEDC(1),ICEP%XFSEDC(2)),ZFSEDC(JIJ,JK))
+        ZRAY(JIJ,JK)   = 0.5*((1.-PSEA(JIJ))*GAMMA(ICED%XNUC + 1.0/ICED%XALPHAC)/(GAMMA(ICED%XNUC)) &
+                     & + PSEA(JIJ)*GAMMA(ICED%XNUC2+1.0/ICED%XALPHAC2)/(GAMMA(ICED%XNUC2)))
+!       ZLBC(JIJ,JK)   = PSEA(JIJ)*ZXLBC2(JIJ) + (1.-PSEA(JIJ))*ZXLBC1(JIJ)
+!       ZFSEDC(JIJ,JK) = (PSEA(JIJ)*ZZFSEDC2(JIJ) + (1.-PSEA(JIJ))*ZZFSEDC1(JIJ))
+!       ZFSEDC(JIJ,JK) = MAX(MIN(ZZFSEDC1(JIJ),ZZFSEDC2(JIJ)),ZFSEDC(JIJ,JK))
+!       ZRAY(JIJ,JK)   = 0.5*((1.-PSEA(JIJ))*GAMMA(PRZNUC(JIJ) + 1.0/ICED%XALPHAC)/(GAMMA(PRZNUC(JIJ))) &
+!                    & + PSEA(JIJ)*GAMMA(ICED%XNUC2+1.0/PALPHAC2(JIJ))/(GAMMA(ICED%XNUC2)))
       ENDDO
     ENDDO
   ENDIF
@@ -728,7 +750,8 @@ IF (KSIZE >= 0) THEN
   !Cloud water split between high and low content part is done here
   !according to autoconversion option
   DO JL = 1, KSIZE
-    ZRCRAUTC(JL) = PRCRIAUTI(JL)/ZRHODREF(JL) ! Autoconversion rc threshold
+    ZRCRAUTC(JL) = ICEP%XCRIAUTC/ZRHODREF(JL) ! Autoconversion rc threshold
+!   ZRCRAUTC(JL) = PRCRIAUTI(JL)/ZRHODREF(JL) ! Autoconversion rc threshold
   ENDDO
 
   IF (HSUBG_AUCV_RC == 'NONE') THEN
@@ -965,7 +988,7 @@ IF (KSIZE >= 0) THEN
 !
   CALL RAIN_ICE_OLD_SLOW(D, CST, ICED, ICEP, PARAMI, BUCONF, &
                          KSIZE, OCND2, LMODICEDEP, &
-                         PTSTEP, &
+                         PTSTEP, ZREDSN, &
                          GMICRO, PRHODJ, PTHS, PRVS, &
                          ZRCT, ZRRT, ZRIT, ZRRS, &
                          ZRGS, ZRST, ZRGT, ZCIT, &
@@ -974,7 +997,7 @@ IF (KSIZE >= 0) THEN
                          ZRVS, ZRCS, ZRIS, ZRSS, ZTHS, &
                          ZLBDAG, ZKA, ZDV, &
                          ZAI, ZCJ, ZAA2, ZBB3, &
-                         ZDICRIT,  ZKVO, &
+                         ZDICRIT, ZREDGR, ZKVO, &
                          TBUDGETS, KBUDGETS, ZZRCRIAUTI, ZZRDEPSRED, ZZRDEPGRED)
 !
 !-------------------------------------------------------------------------------

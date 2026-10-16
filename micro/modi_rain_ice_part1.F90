@@ -13,7 +13,7 @@ INTERFACE
                                    PTHT, PRT, PTHS, PRS,                                 &
                                    PINPRC, PINPRR, PEVAP3D,                              &
                                    PINPRS, PINPRG, PRAINFR, PSIGS,               &
-                                   PRCRIAUTI, PRCRIAUTC,                                   &
+                                   PRCRIAUTI, PRCRIAUTC,                                 &
                                    TBUDGETS, KBUDGETS,                                   &
                                    PQCT, PQRT, PQIT, PQST, PQGT,           &
                                    PQCS, PQRS, PQIS, PQSS, PQGS,           &

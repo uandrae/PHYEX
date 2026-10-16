@@ -52,6 +52,8 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
     REAL, INTENT(IN) :: PTSTEP ! Double Time step (single if cold start)
 
+    REAL, INTENT(IN) :: ZREDSN
+
     LOGICAL, DIMENSION(D%NIT,D%NKT), INTENT(IN) :: GMICRO ! Layer thickness (m)
 
     REAL, DIMENSION(D%NIT,D%NKT), INTENT(IN) :: PRHODJ  ! Dry density * Jacobian
@@ -92,7 +94,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
     REAL, DIMENSION(KSIZE), INTENT(IN)    :: PAA2 ! Part of PAI used for optimized code
     REAL, DIMENSION(KSIZE), INTENT(IN)    :: PBB3 ! Part of PAI used for optimized code
 
-    REAL, INTENT(IN) :: ZDICRIT ! Possible reduction of the rate of graupel,snow growth
+    REAL, INTENT(IN) :: ZDICRIT, ZREDGR ! Possible reduction of the rate of graupel,snow growth
     REAL, INTENT(IN) :: ZKVO ! factor used for caluclate maximum mass in the ice distubution.
 
     TYPE(TBUDGETDATA_PTR), DIMENSION(KBUDGETS), INTENT(INOUT) :: TBUDGETS
@@ -231,7 +233,6 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
     ELSE
       DO JL = 1, KSIZE
         IF ((PRST(JL)>ICED%XRTMIN(5)) .AND. (PRSS(JL)>0.0)) THEN
-
           ZZW(JL) = ( PSSI(JL)/(PRHODREF(JL)*PAI(JL)) ) *          &
                ( ICEP%X0DEPS*PLDBAS(JL)**ICEP%XEX0DEPS + ICEP%X1DEPS*PCJ(JL)*PLDBAS(JL)**ICEP%XEX1DEPS )
           ZZW(JL) = MIN(PZRVS(JL),ZZW(JL)     )*(0.5+SIGN(0.5,ZZW(JL))) &
@@ -373,10 +374,12 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
         ZZW(JL) = MIN(PZRVS(JL),ZZW(JL)      )*(0.5+SIGN(0.5,ZZW(JL))) &
                 - MIN(PRGS(JL),ABS(ZZW(JL)) )*(0.5-SIGN(0.5,ZZW(JL)))
-        ZZW(JL) = ZZW(JL)*ZZRDEPGRED(JL)
+        ZZW(JL) = ZZW(JL)*ZREDGR
+!       ZZW(JL) = ZZW(JL)*ZZRDEPGRED(JL)
 
         IF (ZZW(JL) < 0.0 ) THEN
-          ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
+          ZZW(JL)  = ZZW(JL) * ICEP%XRDEPGRED
+!         ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
         END IF
 
         PRSS(JL) = (ZZW(JL) + PRGS(JL))* ZZW2(JL) + PRSS(JL)
@@ -388,7 +391,8 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
     DO JL = 1, KSIZE
       IF (ZZW(JL) < 0.0) THEN
-        ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
+        ZZW(JL)  = ZZW(JL) * ICEP%XRDEPGRED
+!       ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
       END IF
     END DO
 

@@ -104,7 +104,8 @@ IF (.NOT. PARAMI%LOCND2 ) THEN
     ENDIF
   ENDIF
   IF (GNEGT) THEN
-    ZZW=ZZW*PICENU-PCIT
+!   ZZW=ZZW*PICENU-PCIT
+    ZZW=ZZW-PCIT
     ZZW=MIN(ZZW, 50.E3) ! limitation provisoire a 50 l^-1
   END IF
 
