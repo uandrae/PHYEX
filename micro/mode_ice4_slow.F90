@@ -11,7 +11,7 @@ SUBROUTINE ICE4_SLOW(CST, PARAMI, ICEP, ICED, KPROMA, KSIZE, LDSOFT, OELEC, LDCO
                      &PLBDAS, PLBDAG, &
                      &PAI, PCJ, PHLI_HCF, PHLI_HRI,&
                      &PLATHAM_IAGGS, &
-                     &PRCHONI, PRVDEPS, PRIAGGS, PRIAUTS, PRVDEPG)
+                     &PRCHONI, PRVDEPS, PRIAGGS, PRIAUTS, PRVDEPG, PRCRIAUTI, PRDEPSRED, PRDEPGRED)
 !!
 !!**  PURPOSE
 !!    -------
@@ -35,7 +35,7 @@ SUBROUTINE ICE4_SLOW(CST, PARAMI, ICEP, ICED, KPROMA, KSIZE, LDSOFT, OELEC, LDCO
 !          ------------
 !
 USE MODD_CST,            ONLY: CST_t
-USE MODD_PARAM_ICE_n,      ONLY: PARAM_ICE_t
+USE MODD_PARAM_ICE_n,      ONLY: PARAM_ICE_t,LCRIAUTI,XACRIAUTI_NAM, XBCRIAUTI_NAM
 USE MODD_RAIN_ICE_DESCR_n, ONLY: RAIN_ICE_DESCR_t
 USE MODD_RAIN_ICE_PARAM_n, ONLY: RAIN_ICE_PARAM_t
 USE YOMHOOK , ONLY : LHOOK, DR_HOOK, JPHOOK
@@ -74,12 +74,16 @@ REAL, DIMENSION(KPROMA),      INTENT(INOUT) :: PRVDEPS  ! Deposition on r_s
 REAL, DIMENSION(KPROMA),      INTENT(INOUT) :: PRIAGGS  ! Aggregation on r_s
 REAL, DIMENSION(KPROMA),      INTENT(INOUT) :: PRIAUTS  ! Autoconversion of r_i for r_s production
 REAL, DIMENSION(KPROMA),      INTENT(INOUT) :: PRVDEPG  ! Deposition on r_g
+REAL, DIMENSION(KPROMA),      INTENT(IN)    :: PRCRIAUTI! SPP for microphysics
+REAL, DIMENSION(KPROMA),      INTENT(IN)    :: PRDEPSRED! SPP for microphysics
+REAL, DIMENSION(KPROMA),      INTENT(IN)    :: PRDEPGRED! SPP for microphysics
 !
 !*       0.2  declaration of local variables
 !
-REAL, DIMENSION(KPROMA) :: ZCRIAUTI
+REAL, DIMENSION(KPROMA) :: ZCRIAUTI, ZXACRIAUTI, ZXBCRIAUTI
 INTEGER                 :: JL
 REAL            :: ZREDGR,ZREDSN
+REAL            :: ZTCRI0,ZCRI0
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 !-------------------------------------------------------------------------------
 !
@@ -89,15 +93,25 @@ IF (LHOOK) CALL DR_HOOK('ICE4_SLOW', 0, ZHOOK_HANDLE)
 !
 !*       3.1  Tuning possibilties (only for OCND2)
 
-ZREDGR  = 1.      ! Tuning of the deposition of graupel, 1. is ref. value 
+ZREDGR  = 1.      ! Tuning of the deposition of graupel, 1. is ref. value
 ZREDSN  = 1.      ! Tuning of the deposition of snow, 1. is ref. value
 
 IF(PARAMI%LOCND2) THEN
   IF(.NOT. PARAMI%LMODICEDEP) THEN
-    ZREDGR  = ICEP%XFRMIN(39)  ! Tuning factor, may be /= 1. 
+    ZREDGR  = ICEP%XFRMIN(39)  ! Tuning factor, may be /= 1.
     ZREDSN  = ICEP%XFRMIN(40)  ! Tuning factor, may be /= 1.
   ENDIF
 ENDIF
+
+
+!Cloud water split between high and low content part is done according to autoconversion option
+IF(PARAMI%LCRIAUTI) THEN
+   CALL CRIAUTI(PRCRIAUTI, ICEP%XT0CRIAUTI, ZXACRIAUTI, ZXBCRIAUTI)
+ELSE
+   ZXACRIAUTI(:)=PARAMI%XACRIAUTI_NAM
+   ZXBCRIAUTI(:)=PARAMI%XBCRIAUTI_NAM
+ENDIF
+
 #ifdef MNH_COMPILER_CCE
 !$mnh_undef(LOOP)
 #endif
@@ -144,6 +158,7 @@ DO JL=1, KSIZE
         PRVDEPS(JL) = ( PSSI(JL)/(PRHODREF(JL)*PAI(JL)) ) *                               &
                    ( ICEP%X0DEPS*PLBDAS(JL)**ICEP%XEX0DEPS + ICEP%X1DEPS*PCJ(JL)*PLBDAS(JL)**ICEP%XEX1DEPS )
         PRVDEPS(JL) = PRVDEPS(JL)*ZREDSN
+!       PRVDEPS(JL) = PRVDEPS(JL)*PRDEPSRED(JL)
       ELSE
         PRVDEPS(JL) = ( PRST(JL)*(PSSI(JL)/PAI(JL)) ) *                               &
                       ( ICEP%X0DEPS*PLBDAS(JL)**(ICED%XBS+ICEP%XEX0DEPS) + ICEP%X1DEPS*PCJ(JL) * &
@@ -196,6 +211,7 @@ DO JL=1, KSIZE
     IF(.NOT. LDSOFT) THEN
       !ZCRIAUTI(:)=MIN(ICEP%XCRIAUTI,10**(0.06*(PT(:)-CST%XTT)-3.5))
       ZCRIAUTI(JL)=MIN(ICEP%XCRIAUTI,10**(ICEP%XACRIAUTI*(PT(JL)-CST%XTT)+ICEP%XBCRIAUTI))
+!     ZCRIAUTI(JL)=MIN(PRCRIAUTI(JL),10**(ZXACRIAUTI(JL)*(PT(JL)-CST%XTT)+ZXBCRIAUTI(JL)))
       PRIAUTS(JL) = ICEP%XTIMAUTI * EXP( ICEP%XTEXAUTI*(PT(JL)-CST%XTT) ) &
                                   * MAX(PHLI_HRI(JL)-ZCRIAUTI(JL)*PHLI_HCF(JL), 0.)
     ENDIF
@@ -217,10 +233,12 @@ DO JL=1, KSIZE
       PRVDEPG(JL) = ( PSSI(JL)/(PRHODREF(JL)*PAI(JL)) ) *                               &
                  ( ICEP%X0DEPG*PLBDAG(JL)**ICEP%XEX0DEPG + ICEP%X1DEPG*PCJ(JL)*PLBDAG(JL)**ICEP%XEX1DEPG )
       PRVDEPG(JL) = PRVDEPG(JL)*ZREDGR
+!     PRVDEPG(JL) = PRVDEPG(JL)*PRDEPGRED(JL)
     ENDIF
   ELSE
     PRVDEPG(JL) = 0.
   ENDIF
+  PRVDEPG(JL) = PRVDEPG(JL)*PRDEPGRED(JL)
 ENDDO
 !$mnh_end_do()
 
@@ -228,4 +246,7 @@ ENDDO
 IF (LHOOK) CALL DR_HOOK('ICE4_SLOW', 1, ZHOOK_HANDLE)
 !
 END SUBROUTINE ICE4_SLOW
+
+INCLUDE "criauti.func.h"
+
 END MODULE MODE_ICE4_SLOW

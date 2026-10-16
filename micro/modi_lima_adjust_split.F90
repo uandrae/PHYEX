@@ -15,13 +15,15 @@ INTERFACE
                              HACTCCN, PAERO,PSOLORG, PMI,                       &
                              PTHS, OCOMPUTE_SRC, PSRCS, PCLDFR, PICEFR,         &
                              PRC_MF, PRI_MF, PCF_MF,                            &
+                             PRCRIAUTI, PRCRIAUTC,                              &
                              PICE_CLD_WGT, PWEIGHT_MF_CLOUD,                    &
                              PHLC_HRC, PHLC_HCF, PHLI_HRI, PHLI_HCF,            &
-                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF )
+                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF)
 !
 !USE MODD_IO,    ONLY: TFILEDATA
 USE MODD_DIMPHYEX,       ONLY: DIMPHYEX_T
 USE MODD_BUDGET,         ONLY: TBUDGETDATA_PTR, TBUDGETCONF_T
+USE MODD_PARAM_ICE_n,    ONLY: LCRIAUTI,XACRIAUTI_NAM, XBCRIAUTI_NAM
 USE MODD_CST,            ONLY: CST_T
 USE MODD_NSV, ONLY: NSV_T
 USE MODD_NEB_N,            ONLY: NEB_T
@@ -94,6 +96,8 @@ REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(OUT) :: PICEFR    ! Cloud fraction
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRC_MF! Convective Mass Flux liquid mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRI_MF! Convective Mass Flux ice mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PCF_MF! Convective Mass Flux Cloud fraction 
+REAL, DIMENSION(D%NIJT),            INTENT(IN)  :: PRCRIAUTI ! SPP for microphysic
+REAL, DIMENSION(D%NIJT),            INTENT(IN)  :: PRCRIAUTC ! SPP for microphysic
 !
 REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   ::  PICE_CLD_WGT
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)    :: PWEIGHT_MF_CLOUD ! weight coefficient for the mass-flux cloud

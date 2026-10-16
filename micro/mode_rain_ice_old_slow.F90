@@ -9,19 +9,20 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
   CONTAINS
 
-  SUBROUTINE RAIN_ICE_OLD_SLOW(D, CST, ICED, ICEP, BUCONF,         &
+  SUBROUTINE RAIN_ICE_OLD_SLOW(D, CST, ICED, ICEP, PARAMI, BUCONF, &
                                KSIZE, OCND2, LMODICEDEP,           &
-                               PTSTEP, ZREDSN,                     &
+                               PTSTEP,                             &
                                GMICRO, PRHODJ, PTHS, PRVS,         &
                                PRCT, PRRT, PRIT, PRRS,             &
                                PRGS, PRST, PRGT, PCIT,             &
-                               PRHODREF, PZRHODJ, PLDBAS,           &
+                               PRHODREF, PZRHODJ, PLDBAS,          &
                                PZT, PLSFACT, PLVFACT, PPRES, PSSI, &
-                               PZRVS, PRCS, PRIS, PRSS, PZTHS,       &
+                               PZRVS, PRCS, PRIS, PRSS, PZTHS,     &
                                PLBDAG, PKA, PDV,                   &
                                PAI, PCJ, PAA2, PBB3,               &
-                               ZDICRIT, ZREDGR, ZKVO,              &
-                               TBUDGETS, KBUDGETS)
+                               ZDICRIT,  ZKVO,                     &
+                               TBUDGETS, KBUDGETS, ZZRCRIAUTI,     &
+                               ZZRDEPSRED, ZZRDEPGRED)
 
     USE PARKIND1,             ONLY: JPRB
     USE YOMHOOK,              ONLY: LHOOK, DR_HOOK, JPHOOK
@@ -34,12 +35,14 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
                                NBUDGET_RI, NBUDGET_RS, NBUDGET_RV
 
     USE MODE_RAIN_ICE_OLD_ICENUMBER2, ONLY: ICENUMBER2
+    USE MODD_PARAM_ICE_n, ONLY: PARAM_ICE_t
 
     IMPLICIT NONE
 
     TYPE(DIMPHYEX_T), INTENT(IN)       :: D
     TYPE(CST_T), INTENT(IN)            :: CST
     TYPE(RAIN_ICE_PARAM_T), INTENT(IN) :: ICEP
+    TYPE(PARAM_ICE_t), INTENT(IN) :: PARAMI
     TYPE(RAIN_ICE_DESCR_T), INTENT(IN) :: ICED
     TYPE(TBUDGETCONF_t),      INTENT(IN)    :: BUCONF
 
@@ -48,8 +51,6 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
     LOGICAL, INTENT(IN) :: LMODICEDEP ! Logical switch for alternative dep/evap of ice
 
     REAL, INTENT(IN) :: PTSTEP ! Double Time step (single if cold start)
-
-    REAL, INTENT(IN) :: ZREDSN
 
     LOGICAL, DIMENSION(D%NIT,D%NKT), INTENT(IN) :: GMICRO ! Layer thickness (m)
 
@@ -91,23 +92,30 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
     REAL, DIMENSION(KSIZE), INTENT(IN)    :: PAA2 ! Part of PAI used for optimized code
     REAL, DIMENSION(KSIZE), INTENT(IN)    :: PBB3 ! Part of PAI used for optimized code
 
-    REAL, INTENT(IN) :: ZDICRIT, ZREDGR ! Possible reduction of the rate of graupel,snow growth
+    REAL, INTENT(IN) :: ZDICRIT ! Possible reduction of the rate of graupel,snow growth
     REAL, INTENT(IN) :: ZKVO ! factor used for caluclate maximum mass in the ice distubution.
 
     TYPE(TBUDGETDATA_PTR), DIMENSION(KBUDGETS), INTENT(INOUT) :: TBUDGETS
     INTEGER, INTENT(IN) :: KBUDGETS
+    REAL, DIMENSION(KSIZE), INTENT(IN)    :: ZZRCRIAUTI ! SPP for microphysics
+    REAL, DIMENSION(KSIZE), INTENT(IN)    :: ZZRDEPSRED ! SPP for microphysics
+    REAL, DIMENSION(KSIZE), INTENT(IN)    :: ZZRDEPGRED ! SPP for microphysics
+
 !
 !*       3.2     compute the homogeneous nucleation source: RCHONI
 !
     REAL, DIMENSION(KSIZE) :: ZBFT ! Mean time for a pristine ice crystal to reach
                                    ! size of an snow/graupel particle (ZDICRIT)
     REAL, DIMENSION(KSIZE) :: ZCRIAUTI ! Snow-to-ice autoconversion thres.
+    REAL, DIMENSION(KSIZE) :: ZXACRIAUTI, ZXBCRIAUTI
     REAL, DIMENSION(KSIZE) :: ZZW      ! Work array
     REAL, DIMENSION(KSIZE) :: ZZW2     ! Work array
     REAL, DIMENSION(D%NIT,D%NKT) :: ZWKBUD
 
     INTEGER :: JL
     REAL    :: ZINVTSTEP
+    REAL    :: ZTCRI0
+    REAL    :: ZCRI0
 
     REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 
@@ -115,6 +123,13 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
     ZINVTSTEP=1./PTSTEP
     ZZW(:) = 0.0
+
+    IF(PARAMI%LCRIAUTI) THEN
+      CALL CRIAUTI(ZZRCRIAUTI, ICEP%XT0CRIAUTI, ZXACRIAUTI, ZXBCRIAUTI)
+    ELSE
+      ZXACRIAUTI(:)=PARAMI%XACRIAUTI_NAM
+      ZXBCRIAUTI(:)=PARAMI%XBCRIAUTI_NAM
+    ENDIF
 
     IF (BUCONF%LBUDGET_TH) ZWKBUD(:,:) = UNPACK(PZTHS(:),MASK=GMICRO(:,:),FIELD=PTHS)*PRHODJ(:,:)
     IF (BUCONF%LBUDGET_TH) CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HON', ZWKBUD)
@@ -207,6 +222,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
                     (ICEP%X0DEPS*PLDBAS(JL)**ICEP%XEX0DEPS + ICEP%X1DEPS*PCJ(JL)*PLDBAS(JL)**ICEP%XEX1DEPS)
           ZZW(JL) = MIN( PZRVS(JL),MAX(-PRSS(JL),ZZW(JL)))  ! Simpler
           ZZW(JL) = ZZW(JL)*ZREDSN ! Possible tuning by using ZREDSN /=  1
+!         ZZW(JL) = ZZW(JL)*ZZRDEPSRED(JL) ! Possible tuning
           PRSS(JL) = PRSS(JL) + ZZW(JL)
           PZRVS(JL) = PZRVS(JL) - ZZW(JL)
           PZTHS(JL) = PZTHS(JL) + ZZW(JL)*PLSFACT(JL)
@@ -215,6 +231,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
     ELSE
       DO JL = 1, KSIZE
         IF ((PRST(JL)>ICED%XRTMIN(5)) .AND. (PRSS(JL)>0.0)) THEN
+
           ZZW(JL) = ( PSSI(JL)/(PRHODREF(JL)*PAI(JL)) ) *          &
                ( ICEP%X0DEPS*PLDBAS(JL)**ICEP%XEX0DEPS + ICEP%X1DEPS*PCJ(JL)*PLDBAS(JL)**ICEP%XEX1DEPS )
           ZZW(JL) = MIN(PZRVS(JL),ZZW(JL)     )*(0.5+SIGN(0.5,ZZW(JL))) &
@@ -222,6 +239,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
           IF (ZZW(JL) < 0.0) THEN
             ZZW(JL) = ZZW(JL) * ICEP%XRDEPSRED
+!           ZZW(JL) = ZZW(JL) * ZZRDEPSRED(JL)
           END IF
 
           PRSS(JL) = PRSS(JL) + ZZW(JL)
@@ -265,6 +283,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 !*       3.4.5  compute the autoconversion of r_i for r_s production: RIAUTS
 
     ZCRIAUTI(:)=MIN(ICEP%XCRIAUTI,10**(ICEP%XACRIAUTI*(PZT(:)-CST%XTT)+ICEP%XBCRIAUTI))
+!   ZCRIAUTI(:)=MIN(ZZRCRIAUTI(:),10**(ZXACRIAUTI(:)*(PZT(:)-CST%XTT)+ZXBCRIAUTI(:)))
     ZZW(:) = 0.0
     IF (BUCONF%LBUDGET_RI) ZWKBUD(:,:) = UNPACK(PRIS(:)*PZRHODJ(:),MASK=GMICRO(:,:),FIELD=0.0)
     IF (BUCONF%LBUDGET_RI) CALL TBUDGETS(NBUDGET_RI)%PTR%INIT_PHY(D, 'AUTS', ZWKBUD)
@@ -354,10 +373,10 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
         ZZW(JL) = MIN(PZRVS(JL),ZZW(JL)      )*(0.5+SIGN(0.5,ZZW(JL))) &
                 - MIN(PRGS(JL),ABS(ZZW(JL)) )*(0.5-SIGN(0.5,ZZW(JL)))
-        ZZW(JL) = ZZW(JL)*ZREDGR
+        ZZW(JL) = ZZW(JL)*ZZRDEPGRED(JL)
 
         IF (ZZW(JL) < 0.0 ) THEN
-          ZZW(JL)  = ZZW(JL) * ICEP%XRDEPGRED
+          ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
         END IF
 
         PRSS(JL) = (ZZW(JL) + PRGS(JL))* ZZW2(JL) + PRSS(JL)
@@ -369,7 +388,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
     DO JL = 1, KSIZE
       IF (ZZW(JL) < 0.0) THEN
-        ZZW(JL)  = ZZW(JL) * ICEP%XRDEPGRED
+        ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
       END IF
     END DO
 
@@ -383,5 +402,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
     IF (LHOOK) CALL DR_HOOK('RAIN_ICE_OLD:RAIN_ICE_SLOW',1,ZHOOK_HANDLE)
 
   END SUBROUTINE RAIN_ICE_OLD_SLOW
+
+  INCLUDE "criauti.func.h"
 
 END MODULE MODE_RAIN_ICE_OLD_SLOW

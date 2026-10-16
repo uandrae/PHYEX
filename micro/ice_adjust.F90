@@ -15,7 +15,7 @@
                             &OCOMPUTE_SRC, PSRCS, PCLDFR,                      &
                             &PRR, PRI, PRIS, PRS, PRG, TBUDGETS, KBUDGETS,     &
                             &PICE_CLD_WGT,                                     &
-                            &PRH,                                              &
+                            &PRH,PRCRIAUTI,PRCRIAUTC,                          &
                             &POUT_RV, POUT_RC, POUT_RI, POUT_TH,               &
                             &PHLC_HRC, PHLC_HCF, PHLI_HRI, PHLI_HCF,           &
                             &PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF)
@@ -191,6 +191,8 @@ TYPE(TBUDGETDATA_PTR), DIMENSION(KBUDGETS),       INTENT(INOUT)::  TBUDGETS
 INTEGER,                                      INTENT(IN)   ::  KBUDGETS
 REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   ::  PICE_CLD_WGT
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)   ::  PRH  ! Hail       m.r. to adjust
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   ::  PRCRIAUTI ! SPP for microphysic
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   ::  PRCRIAUTC ! SPP for microphysic
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(OUT)  ::  POUT_RV ! Adjusted value
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(OUT)  ::  POUT_RC ! Adjusted value
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(OUT)  ::  POUT_RI ! Adjusted value
@@ -216,14 +218,15 @@ REAL, DIMENSION(D%NIJT,D%NKT) &
                             ZLV,  &  ! guess of the Lv at t+1
                             ZLS      ! guess of the Ls at t+1
 REAL :: ZCRIAUT, & ! Autoconversion thresholds
-        ZHCF, ZHR
+        ZHCF, ZHR, ZEPS, ZTCRI0,ZCRI0
 !
 INTEGER             :: JITER,ITERMAX ! iterative loop for first order adjustment
 INTEGER             :: JIJ, JK
 INTEGER :: IKTB, IKTE, IIJB, IIJE
 !
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZSIGS, ZSRCS, ZWKBUD
-REAL, DIMENSION(D%NIJT) :: ZSIGQSAT
+REAL, DIMENSION(D%NIJT) :: ZSIGQSAT, ZRCRIAUTI, ZRCRIAUTC
+REAL, DIMENSION(D%NIJT) :: ZXACRIAUTI, ZXBCRIAUTI
 LOGICAL :: LLNONE, LLTRIANGLE, LLBIGA, LLHLC_H, LLHLI_H
 
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
@@ -234,6 +237,8 @@ REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 !               -------------
 !
 IF (LHOOK) CALL DR_HOOK('ICE_ADJUST',0,ZHOOK_HANDLE)
+!
+ZEPS = 1.E-20
 !
 IKTB=D%NKTB
 IKTE=D%NKTE
@@ -250,6 +255,25 @@ IF(BUCONF%LBUDGET_RC) ZWKBUD(:, :) = PRCS(:, :)*PRHODJ(:, :)
 IF(BUCONF%LBUDGET_RC) CALL TBUDGETS(NBUDGET_RC)%PTR%INIT_PHY(D, TRIM(HBUNAME), ZWKBUD)
 IF(BUCONF%LBUDGET_RI) ZWKBUD(:, :) = PRIS(:, :)*PRHODJ(:, :)
 IF(BUCONF%LBUDGET_RI) CALL TBUDGETS(NBUDGET_RI)%PTR%INIT_PHY(D, TRIM(HBUNAME), ZWKBUD)
+
+IF (PRESENT(PRCRIAUTI)) THEN
+  ZRCRIAUTI = PRCRIAUTI
+ELSE
+  ZRCRIAUTI(:) = ICEP%XCRIAUTI
+ENDIF
+IF (PRESENT(PRCRIAUTC)) THEN
+  ZRCRIAUTC = PRCRIAUTC
+ELSE
+  ZRCRIAUTC(:) = ICEP%XCRIAUTC
+ENDIF
+
+IF(PARAMI%LCRIAUTI) THEN
+   CALL CRIAUTI(ZRCRIAUTI, ICEP%XT0CRIAUTI, ZXACRIAUTI, ZXBCRIAUTI)
+ELSE
+   ZXACRIAUTI(:)=PARAMI%XACRIAUTI_NAM
+   ZXBCRIAUTI(:)=PARAMI%XBCRIAUTI_NAM
+ENDIF
+
 !-------------------------------------------------------------------------------
 !
 !*       2.     COMPUTE QUANTITIES WITH THE GUESS OF THE FUTURE INSTANT
@@ -393,6 +417,7 @@ ELSE !NEBN%LSUBG_COND case
       !
       IF(LLHLC_H) THEN
         ZCRIAUT=ICEP%XCRIAUTC/PRHODREF(JIJ,JK)
+!       ZCRIAUT=ZRCRIAUTC(JIJ)/PRHODREF(JIJ,JK)
         IF(LLNONE)THEN
           IF(ZW1*PTSTEP>PCF_MF(JIJ,JK) * ZCRIAUT) THEN
             PHLC_HRC(JIJ,JK)=PHLC_HRC(JIJ,JK)+ZW1*PTSTEP
@@ -401,18 +426,18 @@ ELSE !NEBN%LSUBG_COND case
         ELSEIF(LLTRIANGLE)THEN
           !ZHCF is the precipitating part of the *cloud* and not of the grid cell
           IF(ZW1*PTSTEP>PCF_MF(JIJ,JK)*ZCRIAUT) THEN
-            ZHCF=1.-.5*(ZCRIAUT*PCF_MF(JIJ,JK) / MAX(1.E-20, ZW1*PTSTEP))**2
+            ZHCF=1.-.5*(ZCRIAUT*PCF_MF(JIJ,JK) / MAX(ZEPS, ZW1*PTSTEP))**2
             ZHR=ZW1*PTSTEP-(ZCRIAUT*PCF_MF(JIJ,JK))**3 / &
-                                        &(3*MAX(1.E-20, ZW1*PTSTEP)**2)
+                                        &(3.*MAX(ZEPS, ZW1*PTSTEP)**2)
           ELSEIF(2.*ZW1*PTSTEP<=PCF_MF(JIJ,JK) * ZCRIAUT) THEN
             ZHCF=0.
             ZHR=0.
           ELSE
             ZHCF=(2.*ZW1*PTSTEP-ZCRIAUT*PCF_MF(JIJ,JK))**2 / &
-                       &(2.*MAX(1.E-20, ZW1*PTSTEP)**2)
+                       &(2.*MAX(ZEPS, ZW1*PTSTEP)**2)
             ZHR=(4.*(ZW1*PTSTEP)**3-3.*ZW1*PTSTEP*(ZCRIAUT*PCF_MF(JIJ,JK))**2+&
                         (ZCRIAUT*PCF_MF(JIJ,JK))**3) / &
-                      &(3*MAX(1.E-20, ZW1*PTSTEP)**2)
+                      &(3.*MAX(ZEPS, ZW1*PTSTEP)**2)
           ENDIF
           ZHCF=ZHCF*PCF_MF(JIJ,JK) !to retrieve the part of the grid cell
           PHLC_HCF(JIJ,JK)=MIN(1.,PHLC_HCF(JIJ,JK)+ZHCF) !total part of the grid cell that is precipitating
@@ -424,6 +449,7 @@ ELSE !NEBN%LSUBG_COND case
       ENDIF
       IF(LLHLI_H) THEN
         ZCRIAUT=MIN(ICEP%XCRIAUTI,10**(ICEP%XACRIAUTI*(ZT(JIJ,JK)-CST%XTT)+ICEP%XBCRIAUTI))
+!       ZCRIAUT=MIN(ZRCRIAUTI(JIJ),10**(ZXACRIAUTI(JIJ)*(ZT(JIJ,JK)-CST%XTT)+ZXBCRIAUTI(JIJ)))
         IF(LLNONE)THEN
           IF(ZW2*PTSTEP>PCF_MF(JIJ,JK) * ZCRIAUT) THEN
             PHLI_HRI(JIJ,JK)=PHLI_HRI(JIJ,JK)+ZW2*PTSTEP
@@ -433,6 +459,7 @@ ELSE !NEBN%LSUBG_COND case
           !ZHCF is the precipitating part of the *cloud* and not of the grid cell
           IF(ZW2*PTSTEP>PCF_MF(JIJ,JK)*ZCRIAUT) THEN
             ZHCF=1.-.5*(ZCRIAUT*PCF_MF(JIJ,JK) / (ZW2*PTSTEP))**2
+!           ZHCF=1.-.5*(ZCRIAUT*PCF_MF(JIJ,JK) / (ZW2*PTSTEP))**2
             ZHR=ZW2*PTSTEP-(ZCRIAUT*PCF_MF(JIJ,JK))**3/(3*(ZW2*PTSTEP)**2)
           ELSEIF(2.*ZW2*PTSTEP<=PCF_MF(JIJ,JK) * ZCRIAUT) THEN
             ZHCF=0.
@@ -547,7 +574,8 @@ IF ( NEBN%LSUBG_COND ) THEN
        PPABST, PZZ, PRHODREF, ZT, PRV_IN, PRV_OUT, PRC_IN, PRC_OUT, PRI_IN, PRI_OUT, &
        PRR, PRS, PRG, PSIGS, LMFCONV, PMFCONV, PCLDFR, &
        ZSRCS, .TRUE., NEBN%LSIGMAS, PARAMI%LOCND2,                       &
-       PICLDFR, PWCLDFR, PSSIO, PSSIU, PIFR, PSIGQSAT,                   &
+       PICLDFR, PWCLDFR, PSSIO, PSSIU, PIFR, PSIGQSAT, &
+       PRCRIAUTI, PRCRIAUTC, ZXACRIAUTI, ZXBCRIAUTI, &
        PLV=ZLV, PLS=ZLS, PCPH=ZCPH,                                      &
        PHLC_HRC=PHLC_HRC, PHLC_HCF=PHLC_HCF, PHLI_HRI=PHLI_HRI, PHLI_HCF=PHLI_HCF,&
        PICE_CLD_WGT=PICE_CLD_WGT)
@@ -567,12 +595,15 @@ ELSE
        PPABST, PZZ, PRHODREF, ZT, PRV_IN, PRV_OUT, PRC_IN, PRC_OUT, PRI_IN, PRI_OUT, &
        PRR, PRS, PRG, ZSIGS, LMFCONV, PMFCONV, PCLDFR, &
        ZSRCS, .TRUE., .TRUE., PARAMI%LOCND2,                             &
-       PICLDFR, PWCLDFR, PSSIO, PSSIU, PIFR, ZSIGQSAT,                   &
+       PICLDFR, PWCLDFR, PSSIO, PSSIU, PIFR, ZSIGQSAT, &
+       PRCRIAUTI, PRCRIAUTC, ZXACRIAUTI, ZXBCRIAUTI, &
        PLV=ZLV, PLS=ZLS, PCPH=ZCPH,                                      &
        PHLC_HRC=PHLC_HRC, PHLC_HCF=PHLC_HCF, PHLI_HRI=PHLI_HRI, PHLI_HCF=PHLI_HCF,&
        PICE_CLD_WGT=PICE_CLD_WGT)
 ENDIF
 
 END SUBROUTINE ITERATION
+
+INCLUDE "criauti.func.h"
 
 END SUBROUTINE ICE_ADJUST 

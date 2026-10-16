@@ -4,7 +4,8 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 !     ###########################################################################
-SUBROUTINE LIMA_ADJUST_SPLIT(LIMAP, LIMAW, TNSV, D, CST, NEBN, TURBN, BUCONF, TBUDGETS, KBUDGETS,  &
+SUBROUTINE LIMA_ADJUST_SPLIT(LIMAP, LIMAW, TNSV, D, CST, ICEP, NEBN, TURBN,     &
+                             PARAMI, BUCONF, TBUDGETS, KBUDGETS,                &
                              KRR, HCONDENS, HLAMBDA3,                           &
                              KCARB, KSOA, KSP, ODUST, OSALT, OORILAM,           &
                              OSUBG_COND, OSIGMAS, PTSTEP, PSIGQSAT,             &
@@ -14,9 +15,10 @@ SUBROUTINE LIMA_ADJUST_SPLIT(LIMAP, LIMAW, TNSV, D, CST, NEBN, TURBN, BUCONF, TB
                              HACTCCN, PAERO,PSOLORG, PMI,                       &
                              PTHS, OCOMPUTE_SRC, PSRCS, PCLDFR, PICEFR,         &
                              PRC_MF, PRI_MF, PCF_MF,                            &
+                             PRCRIAUTI, PRCRIAUTC,                              &
                              PICE_CLD_WGT, PWEIGHT_MF_CLOUD,                    &
                              PHLC_HRC, PHLC_HCF, PHLI_HRI, PHLI_HCF,            &
-                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF )
+                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF)
 !     ###########################################################################
 !
 !!****  *MIMA_ADJUST* -  compute the fast microphysical sources 
@@ -101,7 +103,8 @@ USE MODD_CST,            ONLY: CST_T
 USE MODD_NSV,             ONLY: NSV_T
 USE MODD_PARAM_LIMA, ONLY: PARAM_LIMA_T
 USE MODD_PARAM_LIMA_WARM, ONLY : PARAM_LIMA_WARM_T
-USE MODD_RAIN_ICE_PARAM_N,   ONLY: RAIN_ICE_PARAMN
+USE MODD_PARAM_ICE_n,    ONLY: PARAM_ICE_t
+USE MODD_RAIN_ICE_PARAM_N,   ONLY: RAIN_ICE_PARAMN, RAIN_ICE_PARAM_t
 USE MODD_NEB_N,            ONLY: NEB_T
 USE MODD_TURB_N,           ONLY: TURB_T
 USE MODD_DIMPHYEX,         ONLY: DIMPHYEX_T
@@ -121,8 +124,10 @@ TYPE(PARAM_LIMA_WARM_T),INTENT(IN)::LIMAW
 TYPE(NSV_T),              INTENT(IN)    :: TNSV
 TYPE(DIMPHYEX_T),         INTENT(IN)    :: D
 TYPE(CST_T),              INTENT(IN)    :: CST
+TYPE(RAIN_ICE_PARAM_t),   INTENT(IN)    :: ICEP
 TYPE(NEB_T),              INTENT(IN)    :: NEBN
 TYPE(TURB_T),             INTENT(IN)    :: TURBN
+TYPE(PARAM_ICE_t),        INTENT(IN)    :: PARAMI
 TYPE(TBUDGETCONF_T),      INTENT(IN)    :: BUCONF
 TYPE(TBUDGETDATA_PTR), DIMENSION(KBUDGETS), INTENT(INOUT) :: TBUDGETS
 INTEGER, INTENT(IN) :: KBUDGETS
@@ -180,6 +185,8 @@ REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(OUT) :: PICEFR    ! Cloud fraction
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRC_MF! Convective Mass Flux liquid mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRI_MF! Convective Mass Flux ice mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PCF_MF! Convective Mass Flux Cloud fraction 
+REAL, DIMENSION(D%NIJT),       OPTIONAL,  INTENT(IN)  :: PRCRIAUTI ! SPP for microphysic
+REAL, DIMENSION(D%NIJT),       OPTIONAL,  INTENT(IN)  :: PRCRIAUTC ! SPP for microphysic
 REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   ::  PICE_CLD_WGT
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)    :: PWEIGHT_MF_CLOUD ! weight coefficient for the mass-flux cloud
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(OUT)  ::  PHLC_HRC
@@ -240,7 +247,9 @@ REAL, DIMENSION(D%NIJT,D%NKT) &
                             ZWKBUD, &
                             ZWTOT, &
                             ZWR, ZWS, ZWG
-!
+REAL                     :: ZTCRI0,ZCRI0
+REAL, DIMENSION(D%NIJT) :: ZXACRIAUTI, ZXBCRIAUTI 
+                    !
 INTEGER, DIMENSION(D%NIJT,D%NKT) :: IVEC1
 INTEGER                           :: ISIZE
 LOGICAL                           :: G_SIGMAS, GUSERI
@@ -272,6 +281,14 @@ ISV_LIMA_NC       = TNSV%NSV_LIMA_NC       - TNSV%NSV_LIMA_BEG + 1
 ISV_LIMA_CCN_FREE = TNSV%NSV_LIMA_CCN_FREE - TNSV%NSV_LIMA_BEG + 1
 ISV_LIMA_CCN_ACTI = TNSV%NSV_LIMA_CCN_ACTI - TNSV%NSV_LIMA_BEG + 1
 ISV_LIMA_SCAVMASS = TNSV%NSV_LIMA_SCAVMASS - TNSV%NSV_LIMA_BEG + 1
+
+IF(PRESENT(PRCRIAUTI)) THEN
+   CALL CRIAUTI(PRCRIAUTI, ICEP%XT0CRIAUTI, ZXACRIAUTI, ZXBCRIAUTI)
+ELSE
+   ZXACRIAUTI(:)=PARAMI%XACRIAUTI_NAM
+   ZXBCRIAUTI(:)=PARAMI%XBCRIAUTI_NAM
+ENDIF
+
 !
 ISIZE = SIZE(LIMAP%XRTMIN)
 ALLOCATE(ZRTMIN(ISIZE))
@@ -410,7 +427,7 @@ IF (LIMAP%LADJ) THEN
         ZWR, ZWS, ZWG, &
         Z_SIGS, .FALSE., PMFCONV, PCLDFR, Z_SRCS, GUSERI, G_SIGMAS, .FALSE., &
         ZDUM, ZDUM, ZDUM, ZDUM, ZDUM,                                        &
-        PSIGQSAT, PLV=ZLV, PLS=ZLS, PCPH=ZCPH,                               &
+        PSIGQSAT, PRCRIAUTI, PRCRIAUTC, ZXACRIAUTI, ZXBCRIAUTI, PLV=ZLV, PLS=ZLS, PCPH=ZCPH, &
         PHLC_HRC=PHLC_HRC, PHLC_HCF=PHLC_HCF, PHLI_HRI=PHLI_HRI, PHLI_HCF=PHLI_HCF,&
         PICE_CLD_WGT=PICE_CLD_WGT )
    !
@@ -661,4 +678,9 @@ IF (ALLOCATED(ZNAT)) DEALLOCATE(ZNAT)
 !------------------------------------------------------------------------------
 !
 IF (LHOOK) CALL DR_HOOK('LIMA_ADJUST_SPLIT', 1, ZHOOK_HANDLE)
+
+CONTAINS
+
+INCLUDE "criauti.func.h"
+
 END SUBROUTINE LIMA_ADJUST_SPLIT

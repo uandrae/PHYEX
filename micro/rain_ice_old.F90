@@ -12,8 +12,12 @@
                                PINPRS, PINPRG, PSIGS, PSEA, PTOWN,                    &
                                OAERONRT, OAEIFN, PCLDROP, PIFNNC,                     &
                                TBUDGETS, KBUDGETS,                                    &
-                               PICENU, PKGN_ACON, PKGN_SBGR,                          &
-                               PRHT, PRHS, PINPRH, PFPR)
+                               PRHT, PRHS, PINPRH, PFPR,                              &
+                               LALPHAC2, LRZNUC,                                      &
+                               PICENU, PALPHAC2, PRZNUC, PRXCS,                       &
+                               PKGN_ACON, PKGN_SBGR,                                  &
+                               PRCRIAUTI,PRCRIAUTC,PRDEPSRED,PRDEPGRED)
+
 
       USE YOMHOOK,             ONLY: LHOOK, DR_HOOK, JPHOOK
       USE MODD_DIMPHYEX,       ONLY: DIMPHYEX_T
@@ -273,7 +277,11 @@ REAL, DIMENSION(D%NIJT,D%NKT), INTENT(IN)  :: PIFNNC   ! Ice freezing nuclei con
 !
 TYPE(TBUDGETDATA_PTR), DIMENSION(KBUDGETS), INTENT(INOUT) :: TBUDGETS
 INTEGER, INTENT(IN) :: KBUDGETS
-REAL, DIMENSION(D%NIJT), INTENT(IN)            :: PICENU, PKGN_ACON, PKGN_SBGR
+! SPP variables
+LOGICAL,                       INTENT(IN)  :: LALPHAC2, LRZNUC ! Switch for ALPHAC2 and LRZNUC perturbations
+REAL, DIMENSION(D%NIJT),       INTENT(IN)  :: PICENU, PALPHAC2, PRZNUC, PRXCS, &
+                                            & PKGN_ACON, PKGN_SBGR, &
+                                            & PRCRIAUTI, PRCRIAUTC, PRDEPSRED, PRDEPGRED
 REAL, DIMENSION(D%NIJT,D%NKT),   OPTIONAL, INTENT(IN)    :: PRHT    ! Hail m.r. at t
 REAL, DIMENSION(D%NIJT,D%NKT),   OPTIONAL, INTENT(INOUT) :: PRHS    ! Hail m.r. source
 REAL, DIMENSION(D%NIJT),         OPTIONAL, INTENT(OUT)   :: PINPRH  ! Hail instant precip
@@ -294,9 +302,11 @@ REAL, DIMENSION(D%NIJT,D%NKT) :: ZT        ! Temperature
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZRAY      ! Cloud Mean radius
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZLBC      ! XLBC weighted by sea fraction
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZFSEDC
+REAL, DIMENSION(D%NIJT)       :: ZZFSEDC1, ZZFSEDC2   ! work arrays for SPP perturbations
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZCONC3D   ! droplet concentration m-3
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZZZZ      ! geometric height
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZZZT      ! tempoary value for geometric height
+REAL, DIMENSION(D%NIJT) :: ZXLBC1,ZXLBC2   ! Expanded value of XLBC
 
 !Diagnostics
 REAL, DIMENSION(D%NIJT,D%NKT) :: ZRAINFR
@@ -389,13 +399,12 @@ REAL            :: ZRVSOLD, ZTSP
 REAL            :: ZRSP, ZRISOLD, ZRSSOLD, ZRGSOLD ! Function,old ice
 REAL            :: ZRISFRC, ZRSSFRC, ZRGSFRC, ZRFRAC, ZRSA, ZRSTS, ZRSB, ZRSDIF, ZR20
 REAL            :: ZRSI, ZRSW, ZDICRIT, ZCITRED23, ZCITRED, ZRCW, ZVT, ZST
-REAL            :: ZREDGR, ZREDSN    ! Possible reduction of the rate of graupel,snow growth
 REAL            :: ZKVO  ! factor used for caluclate maximum mass in the ice
                          ! distubution.
 !    *******  end logical switch OCND2 *******
 
 ! SPP arrays
-REAL, DIMENSION(KSIZE) :: ZZKGN_ACON,ZZKGN_SBGR
+REAL, DIMENSION(KSIZE) :: ZZKGN_ACON,ZZKGN_SBGR,ZZRCRIAUTI,ZZRCRIAUTC,ZZRDEPSRED,ZZRDEPGRED
 
      !internal fractions etc, finally saturation ratio over ice 'source' value
 
@@ -439,17 +448,6 @@ IF (LMODICEDEP) THEN
   ZKVO =  ZKVO/ZDICRIT/ICEP%XFRMIN(14)
 ENDIF
 
-ZREDGR  = 1.      ! Tuning of the deposition of graupel, 1. is ref. value
-
-ZREDSN  = 1.      ! Tuning of the deposition of snow, 1. is ref. value
-
-IF(OCND2) THEN
-  IF (.NOT. LMODICEDEP) THEN
-    ZREDGR  = ICEP%XFRMIN(39)  ! Tuning factor, may be /= 1.
-    ZREDSN  = ICEP%XFRMIN(40)  ! Tuning factor, may be /= 1.
-  ENDIF
-ENDIF
-
 LTIW=.FALSE.
 IF (NINT(ICEP%XFRMIN(18)) == 1) LTIW=.TRUE.
 
@@ -457,27 +455,55 @@ IF (NINT(ICEP%XFRMIN(18)) == 1) LTIW=.TRUE.
 !*       1.3    COMPUTE VARIABLES FOR SEDIMENTATION
 !               -----------------------------------
 
-IF (OSEDIC) THEN
+IF (OSEDIC.OR.OCND2) THEN
   ZRAY(:,:)   = 0.
+
+  ! Recalculate sedimentation constants if SPP perturbations active
+  IF (LALPHAC2) THEN
+    DO JIJ = D%NIJB,D%NIJE
+       ZXLBC2(JIJ) = ICED%XAR * MOMG(PALPHAC2(JIJ),ICED%XNUC2,3.)
+       ZZFSEDC2(JIJ)  = GAMMA(ICED%XNUC2+(ICED%XDC+3.)/PALPHAC2(JIJ))/GAMMA(ICED%XNUC2+3./PALPHAC2(JIJ))* &
+            (ICEP%XRHO00)**ICED%XCEXVT
+    ENDDO
+  ELSE
+    DO JIJ = D%NIJB,D%NIJE
+       ZXLBC2(JIJ) = ICED%XLBC(2)
+       ZZFSEDC2(JIJ) = ICEP%XFSEDC(2)
+    ENDDO
+  ENDIF
+
+  IF (LRZNUC) THEN
+    DO JIJ = D%NIJB,D%NIJE
+       ZXLBC1(JIJ) = ICED%XAR * MOMG(ICED%XALPHAC,PRZNUC(JIJ),3.)
+       ZZFSEDC1(JIJ)  = GAMMA(PRZNUC(JIJ)+(ICED%XDC+3.)/ICED%XALPHAC)/GAMMA(PRZNUC(JIJ)+3./ICED%XALPHAC)* &
+            (ICEP%XRHO00)**ICED%XCEXVT
+    ENDDO
+  ELSE
+    DO JIJ = D%NIJB,D%NIJE
+       ZXLBC1(JIJ) = ICED%XLBC(1)
+       ZZFSEDC1(JIJ) = ICEP%XFSEDC(1)
+    ENDDO
+  ENDIF
+
   IF (ICEP%XFRMIN(26)>0.001 .OR. (OAERONRT.AND.PARAMI%LEXCLDROP)) THEN
     ! Assume "average" distr. func for simplicity
     DO JK = D%NKTB,D%NKTE
       DO JIJ = D%NIJB,D%NIJE
-        ZLBC(JIJ,JK)   = 0.5* (ICED%XLBC(2)+ICED%XLBC(1)) 
-        ZFSEDC(JIJ,JK) = 0.5* (ICEP%XFSEDC(2)+ICEP%XFSEDC(1))
-        ZFSEDC(JIJ,JK) = MAX(MIN(ICEP%XFSEDC(1),ICEP%XFSEDC(2)),ZFSEDC(JIJ,JK))
-        ZRAY(JIJ,JK)   = 0.5*( 0.5*GAMMA(ICED%XNUC+1.0/ICED%XALPHAC)/(GAMMA(ICED%XNUC)) + &
-          0.5*GAMMA(ICED%XNUC2+1.0/ICED%XALPHAC2)/(GAMMA(ICED%XNUC2)))
+        ZLBC(JIJ,JK)   = 0.5* (ZXLBC2(JIJ)+ZXLBC1(JIJ)) 
+        ZFSEDC(JIJ,JK) = 0.5* (ZZFSEDC2(JIJ)+ZZFSEDC1(JIJ))
+        ZFSEDC(JIJ,JK) = MAX(MIN(ZZFSEDC1(JIJ),ZZFSEDC2(JIJ)),ZFSEDC(JIJ,JK))
+        ZRAY(JIJ,JK)   = 0.5*( 0.5*GAMMA(PRZNUC(JIJ)+1.0/ICED%XALPHAC)/(GAMMA(PRZNUC(JIJ))) + &
+          0.5*GAMMA(ICED%XNUC2+1.0/PALPHAC2(JIJ))/(GAMMA(ICED%XNUC2)))
       ENDDO
     ENDDO
   ELSE
     DO JK=D%NKTB,D%NKTE
       DO JIJ = D%NIJB,D%NIJE
-        ZLBC(JIJ,JK)   = PSEA(JIJ)*ICED%XLBC(2) + (1.-PSEA(JIJ))*ICED%XLBC(1)
-        ZFSEDC(JIJ,JK) = (PSEA(JIJ)*ICEP%XFSEDC(2) + (1.-PSEA(JIJ))*ICEP%XFSEDC(1))
-        ZFSEDC(JIJ,JK) = MAX(MIN(ICEP%XFSEDC(1),ICEP%XFSEDC(2)),ZFSEDC(JIJ,JK))
-        ZRAY(JIJ,JK)   = 0.5*((1.-PSEA(JIJ))*GAMMA(ICED%XNUC + 1.0/ICED%XALPHAC)/(GAMMA(ICED%XNUC)) &
-                     & + PSEA(JIJ)*GAMMA(ICED%XNUC2+1.0/ICED%XALPHAC2)/(GAMMA(ICED%XNUC2)))
+        ZLBC(JIJ,JK)   = PSEA(JIJ)*ZXLBC2(JIJ) + (1.-PSEA(JIJ))*ZXLBC1(JIJ)
+        ZFSEDC(JIJ,JK) = (PSEA(JIJ)*ZZFSEDC2(JIJ) + (1.-PSEA(JIJ))*ZZFSEDC1(JIJ))
+        ZFSEDC(JIJ,JK) = MAX(MIN(ZZFSEDC1(JIJ),ZZFSEDC2(JIJ)),ZFSEDC(JIJ,JK))
+        ZRAY(JIJ,JK)   = 0.5*((1.-PSEA(JIJ))*GAMMA(PRZNUC(JIJ) + 1.0/ICED%XALPHAC)/(GAMMA(PRZNUC(JIJ))) &
+                     & + PSEA(JIJ)*GAMMA(ICED%XNUC2+1.0/PALPHAC2(JIJ))/(GAMMA(ICED%XNUC2)))
       ENDDO
     ENDDO
   ENDIF
@@ -636,6 +662,10 @@ IF (KSIZE >= 0) THEN
     IF (LTIW) ZTIW(JL)=TIWMX_TAB(CST, ICEP%TIWMX, ZPRES(JL),ZZT(JL), ZRVS(JL)*PTSTEP,0.,ZRSP,ZRSW,0.1)
     ZZKGN_ACON(JL)=PKGN_ACON(I1(JL))
     ZZKGN_SBGR(JL)=PKGN_SBGR(I1(JL))
+    ZZRCRIAUTI(JL)=PRCRIAUTI(I1(JL))
+    ZZRCRIAUTC(JL)=PRCRIAUTC(I1(JL))
+    ZZRDEPGRED(JL)=PRDEPGRED(I1(JL))
+    ZZRDEPSRED(JL)=PRDEPSRED(I1(JL))
 
     IF (OCND2) THEN
        ZESI(JL) = ESATI(ICEP%TIWMX, ZZT(JL))
@@ -698,7 +728,7 @@ IF (KSIZE >= 0) THEN
   !Cloud water split between high and low content part is done here
   !according to autoconversion option
   DO JL = 1, KSIZE
-    ZRCRAUTC(JL) = ICEP%XCRIAUTC/ZRHODREF(JL) ! Autoconversion rc threshold
+    ZRCRAUTC(JL) = PRCRIAUTI(JL)/ZRHODREF(JL) ! Autoconversion rc threshold
   ENDDO
 
   IF (HSUBG_AUCV_RC == 'NONE') THEN
@@ -933,9 +963,9 @@ IF (KSIZE >= 0) THEN
     ZRF(JL)=ZRAINFR(I1(JL),I2(JL))
   END DO
 !
-  CALL RAIN_ICE_OLD_SLOW(D, CST, ICED, ICEP, BUCONF, &
+  CALL RAIN_ICE_OLD_SLOW(D, CST, ICED, ICEP, PARAMI, BUCONF, &
                          KSIZE, OCND2, LMODICEDEP, &
-                         PTSTEP, ZREDSN, &
+                         PTSTEP, &
                          GMICRO, PRHODJ, PTHS, PRVS, &
                          ZRCT, ZRRT, ZRIT, ZRRS, &
                          ZRGS, ZRST, ZRGT, ZCIT, &
@@ -944,8 +974,8 @@ IF (KSIZE >= 0) THEN
                          ZRVS, ZRCS, ZRIS, ZRSS, ZTHS, &
                          ZLBDAG, ZKA, ZDV, &
                          ZAI, ZCJ, ZAA2, ZBB3, &
-                         ZDICRIT, ZREDGR, ZKVO, &
-                         TBUDGETS, KBUDGETS)
+                         ZDICRIT,  ZKVO, &
+                         TBUDGETS, KBUDGETS, ZZRCRIAUTI, ZZRDEPSRED, ZZRDEPGRED)
 !
 !-------------------------------------------------------------------------------
 !
@@ -984,7 +1014,7 @@ IF (KSIZE >= 0) THEN
                            ZHLC_HCF, ZHLC_LCF, ZHLC_HRC, ZHLC_LRC, &
                            ZAA2W, ZBB3W, &
                            ZZT, ZPRES, ZESW, &
-                           TBUDGETS, KBUDGETS)
+                           TBUDGETS, KBUDGETS, ZZRCRIAUTC)
   END IF
 !
 !-------------------------------------------------------------------------------
@@ -1340,7 +1370,7 @@ IF (HSEDIM == 'STAT') THEN
                                        PTHT, PRCT, PRRT, PRST, PRGT, &
                                        PRCS, PRRS, PRIS, PRSS, PRGS, &
                                        PINPRC, PINPRR, PINPRS, PINPRG, &
-                                       ZRAY, ZLBC, ZFSEDC, ZCONC3D, &
+                                       ZRAY, ZLBC, ZFSEDC, ZCONC3D, PRXCS, &
                                        PRHT, PRHS, PINPRH, PFPR)
 
   IF(BUCONF%LBU_ENABLE) THEN
@@ -1380,7 +1410,7 @@ ELSEIF (HSEDIM == 'SPLI') THEN
                                         PTHT, PRCT, PRRT, PRST, PRGT, &
                                         PRCS, PRRS, PRIS, PRSS, PRGS, &
                                         PINPRC, PINPRR, PINPRS, PINPRG, &
-                                        ZRAY, ZLBC, ZFSEDC, ZCONC3D, &
+                                        ZRAY, ZLBC, ZFSEDC, ZCONC3D, PRXCS, &
                                         PRHT, PRHS, PINPRH, PFPR)
 
   IF(BUCONF%LBU_ENABLE) THEN
@@ -1425,4 +1455,32 @@ END IF
 
   IF (LHOOK) CALL DR_HOOK('RAIN_ICE_OLD',1,ZHOOK_HANDLE)
 
+CONTAINS
+!
+!------------------------------------------------------------------------------
+!
+  FUNCTION MOMG(PALPHA,PNU,PP) RESULT (PMOMG)
+!
+! auxiliary routine used to compute the Pth moment order of the generalized
+! gamma law
+!
+  USE MODI_GAMMA, ONLY: GAMMA
+!
+  IMPLICIT NONE
+!
+  REAL, INTENT(IN)     :: PALPHA ! first shape parameter of the dimensionnal distribution
+  REAL, INTENT(IN)     :: PNU    ! second shape parameter of the dimensionnal distribution
+  REAL, INTENT(IN)     :: PP     ! order of the moment
+  REAL     :: PMOMG  ! result: moment of order ZP
+!
+!------------------------------------------------------------------------------
+!
+!
+  PMOMG = GAMMA(PNU+PP/PALPHA)/GAMMA(PNU)
+!
+  END FUNCTION MOMG
+!
+!-------------------------------------------------------------------------------
+!
+!
 END SUBROUTINE RAIN_ICE_OLD

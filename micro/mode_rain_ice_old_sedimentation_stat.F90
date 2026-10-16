@@ -15,7 +15,7 @@ MODULE MODE_RAIN_ICE_OLD_SEDIMENTATION_STAT
                                              PTHT, PRCT, PRRT, PRST, PRGT,       &
                                              PRCS, PRRS, PRIS, PRSS, PRGS,       &
                                              PINPRC, PINPRR, PINPRS, PINPRG,     &
-                                             ZRAY, ZLBC, ZFSEDC, ZCONC3D,        &
+                                             ZRAY, ZLBC, ZFSEDC, ZCONC3D, PRXCS, &
                                              PRHT, PRHS, PINPRH, PFPR)
 
     USE MODD_DIMPHYEX,        ONLY: DIMPHYEX_T
@@ -68,6 +68,7 @@ MODULE MODE_RAIN_ICE_OLD_SEDIMENTATION_STAT
     REAL, DIMENSION(D%NIT,D%NKT), INTENT(IN) :: ZLBC    ! XLBC weighted by sea fraction
     REAL, DIMENSION(D%NIT,D%NKT), INTENT(IN) :: ZFSEDC
     REAL, DIMENSION(D%NIT,D%NKT), INTENT(IN) :: ZCONC3D !  droplet concentration m-3
+    REAL, DIMENSION(D%NIT),       INTENT(IN) :: PRXCS   ! Extra variables for VTERM
 
     REAL, DIMENSION(D%NIT,D%NKT),     OPTIONAL, INTENT(IN)    :: PRHT   ! Hail m.r. at t
     REAL, DIMENSION(D%NIT,D%NKT),     OPTIONAL, INTENT(INOUT) :: PRHS   ! Hail m.r. source
@@ -229,11 +230,13 @@ MODULE MODE_RAIN_ICE_OLD_SEDIMENTATION_STAT
         !calculation of w
         IF ( PRRS(JI,JK) > ZRTMIN(3) ) THEN
           ZWSEDW1(JI,JK)= ICEP%XFSEDR *PRRS(JI,JK)**(ICEP%XEXSEDR-1)* &
+!         ZWSEDW1(JI,JK)= (PRXCS(JI)/ICED%XCS)*ICEP%XFSEDR *PRRS(JI,JK)**(ICEP%XEXSEDR-1)* &
           PRHODREF(JI,JK)**(ICEP%XEXSEDR-ICED%XCEXVT-1)
         ENDIF
 
         IF ( ZQP(JI) > ZRTMIN(3) ) THEN
           ZWSEDW2(JI,JK)= ICEP%XFSEDR *(ZQP(JI))**(ICEP%XEXSEDR-1)* &
+!         ZWSEDW2(JI,JK)= (PRXCS(JI)/ICED%XCS)*ICEP%XFSEDR *(ZQP(JI))**(ICEP%XEXSEDR-1)* &
           PRHODREF(JI,JK)**(ICEP%XEXSEDR-ICED%XCEXVT-1)
         ENDIF
       ENDDO
