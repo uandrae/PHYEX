@@ -11,7 +11,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
   SUBROUTINE RAIN_ICE_OLD_SLOW(D, CST, ICED, ICEP, PARAMI, BUCONF, &
                                KSIZE, OCND2, LMODICEDEP,           &
-                               PTSTEP,                             &
+                               PTSTEP, ZREDSN,                     &
                                GMICRO, PRHODJ, PTHS, PRVS,         &
                                PRCT, PRRT, PRIT, PRRS,             &
                                PRGS, PRST, PRGT, PCIT,             &
@@ -20,7 +20,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
                                PZRVS, PRCS, PRIS, PRSS, PZTHS,     &
                                PLBDAG, PKA, PDV,                   &
                                PAI, PCJ, PAA2, PBB3,               &
-                               ZDICRIT,  ZKVO,                     &
+                               ZDICRIT, ZREDGR, ZKVO,              &
                                TBUDGETS, KBUDGETS, ZZRCRIAUTI,     &
                                ZZRDEPSRED, ZZRDEPGRED)
 
