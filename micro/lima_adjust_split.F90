@@ -18,7 +18,7 @@ SUBROUTINE LIMA_ADJUST_SPLIT(LIMAP, LIMAW, TNSV, D, CST, ICEP, NEBN, TURBN,     
                              PRCRIAUTI, PRCRIAUTC,                              &
                              PICE_CLD_WGT, PWEIGHT_MF_CLOUD,                    &
                              PHLC_HRC, PHLC_HCF, PHLI_HRI, PHLI_HCF,            &
-                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF)
+                             PHLC_HRC_MF, PHLC_HCF_MF, PHLI_HRI_MF, PHLI_HCF_MF )
 !     ###########################################################################
 !
 !!****  *MIMA_ADJUST* -  compute the fast microphysical sources 
@@ -185,8 +185,8 @@ REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(OUT) :: PICEFR    ! Cloud fraction
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRC_MF! Convective Mass Flux liquid mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRI_MF! Convective Mass Flux ice mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PCF_MF! Convective Mass Flux Cloud fraction 
-REAL, DIMENSION(D%NIJT),       OPTIONAL,  INTENT(IN)  :: PRCRIAUTI ! SPP for microphysic
-REAL, DIMENSION(D%NIJT),       OPTIONAL,  INTENT(IN)  :: PRCRIAUTC ! SPP for microphysic
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   :: PRCRIAUTI ! SPP for microphysic
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   :: PRCRIAUTC ! SPP for microphysic
 REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   ::  PICE_CLD_WGT
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)    :: PWEIGHT_MF_CLOUD ! weight coefficient for the mass-flux cloud
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(OUT)  ::  PHLC_HRC
@@ -247,9 +247,10 @@ REAL, DIMENSION(D%NIJT,D%NKT) &
                             ZWKBUD, &
                             ZWTOT, &
                             ZWR, ZWS, ZWG
+!
 REAL                     :: ZTCRI0,ZCRI0
-REAL, DIMENSION(D%NIJT) :: ZXACRIAUTI, ZXBCRIAUTI 
-                    !
+REAL, DIMENSION(D%NIJT)  :: ZXACRIAUTI, ZXBCRIAUTI 
+!
 INTEGER, DIMENSION(D%NIJT,D%NKT) :: IVEC1
 INTEGER                           :: ISIZE
 LOGICAL                           :: G_SIGMAS, GUSERI
@@ -427,7 +428,8 @@ IF (LIMAP%LADJ) THEN
         ZWR, ZWS, ZWG, &
         Z_SIGS, .FALSE., PMFCONV, PCLDFR, Z_SRCS, GUSERI, G_SIGMAS, .FALSE., &
         ZDUM, ZDUM, ZDUM, ZDUM, ZDUM,                                        &
-        PSIGQSAT, PRCRIAUTI, PRCRIAUTC, ZXACRIAUTI, ZXBCRIAUTI, PLV=ZLV, PLS=ZLS, PCPH=ZCPH, &
+        PSIGQSAT, PRCRIAUTI, PRCRIAUTC, ZXACRIAUTI, ZXBCRIAUTI,              &
+        PLV=ZLV, PLS=ZLS, PCPH=ZCPH,                                         &
         PHLC_HRC=PHLC_HRC, PHLC_HCF=PHLC_HCF, PHLI_HRI=PHLI_HRI, PHLI_HCF=PHLI_HCF,&
         PICE_CLD_WGT=PICE_CLD_WGT )
    !

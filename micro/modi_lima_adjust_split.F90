@@ -5,7 +5,8 @@
 IMPLICIT NONE
 INTERFACE
 !
-   SUBROUTINE LIMA_ADJUST_SPLIT(LIMAP, LIMAW, TNSV, D, CST, NEBN, TURBN, BUCONF, TBUDGETS, KBUDGETS, &
+   SUBROUTINE LIMA_ADJUST_SPLIT(LIMAP, LIMAW, TNSV, D, CST, ICEP, NEBN, TURBN,  &
+                             PARAMI, BUCONF, TBUDGETS, KBUDGETS,                &
                              KRR, HCONDENS, HLAMBDA3,                           &
                              KCARB, KSOA, KSP, ODUST, OSALT, OORILAM,           &
                              OSUBG_COND, OSIGMAS, PTSTEP, PSIGQSAT,             &
@@ -37,8 +38,10 @@ TYPE(PARAM_LIMA_WARM_T),INTENT(IN)::LIMAW
 TYPE(NSV_T),              INTENT(IN)    :: TNSV
 TYPE(DIMPHYEX_T),         INTENT(IN)    :: D
 TYPE(CST_T),              INTENT(IN)    :: CST
+TYPE(RAIN_ICE_PARAM_t),   INTENT(IN)    :: ICEP
 TYPE(NEB_T),              INTENT(IN)    :: NEBN
 TYPE(TURB_T),             INTENT(IN)    :: TURBN
+TYPE(PARAM_ICE_t),        INTENT(IN)    :: PARAMI
 TYPE(TBUDGETCONF_T),      INTENT(IN)    :: BUCONF
 TYPE(TBUDGETDATA_PTR), DIMENSION(KBUDGETS), INTENT(INOUT) :: TBUDGETS
 INTEGER, INTENT(IN) :: KBUDGETS
@@ -96,9 +99,9 @@ REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(OUT) :: PICEFR    ! Cloud fraction
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRC_MF! Convective Mass Flux liquid mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PRI_MF! Convective Mass Flux ice mixing ratio
 REAL, DIMENSION(D%NIJT, D%NKT),     INTENT(IN)  :: PCF_MF! Convective Mass Flux Cloud fraction 
-REAL, DIMENSION(D%NIJT),            INTENT(IN)  :: PRCRIAUTI ! SPP for microphysic
-REAL, DIMENSION(D%NIJT),            INTENT(IN)  :: PRCRIAUTC ! SPP for microphysic
 !
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   :: PRCRIAUTI ! SPP for microphysic
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   :: PRCRIAUTC ! SPP for microphysic
 REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)   ::  PICE_CLD_WGT
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)    :: PWEIGHT_MF_CLOUD ! weight coefficient for the mass-flux cloud
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(OUT)  ::  PHLC_HRC

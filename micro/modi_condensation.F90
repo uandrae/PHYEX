@@ -69,10 +69,10 @@ REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PSSIU    ! Sub-saturation with r
 REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PIFR     ! Ratio cloud ice moist part
 REAL, DIMENSION(D%NIJT),       INTENT(IN)    :: PSIGQSAT ! use an extra "qsat" variance contribution (OSIGMAS case)
                                                               ! multiplied by PSIGQSAT
-REAL, DIMENSION(D%NIJT),       INTENT(IN)    :: PRCRIAUTI  !SPP for microphysics
-REAL, DIMENSION(D%NIJT),       INTENT(IN)    :: PRCRIAUTC  !SPP for microphysics
-REAL, DIMENSION(D%NIJT),       INTENT(IN)    :: ZXACRIAUTI !SPP for microphysics
-REAL, DIMENSION(D%NIJT),       INTENT(IN)    :: ZXBCRIAUTI !SPP for microphysics
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)    :: PRCRIAUTI  !SPP for microphysics
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)    :: PRCRIAUTC  !SPP for microphysics
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)    :: ZXACRIAUTI !SPP for microphysics
+REAL, DIMENSION(D%NIJT),       OPTIONAL, INTENT(IN)    :: ZXBCRIAUTI !SPP for microphysics
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)    :: PLV    ! Latent heat L_v
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)    :: PLS    ! Latent heat L_s
 REAL, DIMENSION(D%NIJT,D%NKT), OPTIONAL, INTENT(IN)    :: PCPH   ! Specific heat C_ph
