@@ -30,8 +30,8 @@
               & TBUDGETS, KBUDGETS,                                   &
               & PEDR,PLEM,PRTKEMS,PDPMF,PTPMF,                        &
               & PDRUS_TURB,PDRVS_TURB,                                &
-              & PDRTHLS_TURB,PDRRTS_TURB,PDRSVS_TURB,PTR,PDISS,       &
-              & PIBM_LS, PIBM_XMUT,                                   &
+              & PDRTHLS_TURB,PDRRTS_TURB,PDRSVS_TURB,PTURB_SPP,       &
+              & PTR,PDISS, PIBM_LS, PIBM_XMUT,                        &
               & PCURRENT_TKE_DISS, PSSTFL, PSSTFL_C, PSSRFL_C,        &
               & PSSUFL_C, PSSVFL_C,PSSUFL,PSSVFL                      )
 
@@ -253,13 +253,14 @@ USE MODD_BUDGET,     ONLY:  NBUDGET_U,  NBUDGET_V,  NBUDGET_W,  NBUDGET_TH, NBUD
                             NBUDGET_RI, NBUDGET_SV1, NBUDGET_RG, NBUDGET_RH, NBUDGET_RR, NBUDGET_RS, &
                             TBUDGETDATA_PTR, TBUDGETCONF_T
 USE MODD_CST,        ONLY: CST_t
-USE MODD_CTURB,      ONLY: CSTURB_t
+USE MODD_CTURB,      ONLY: CSTURB_t, XCMFS, XCEP
 USE MODD_DIMPHYEX,   ONLY: DIMPHYEX_t
 USE MODD_FIELD,      ONLY: TFIELDMETADATA, TYPEREAL
 USE MODD_IO,         ONLY: TFILEDATA
 USE MODD_LES,        ONLY: TLES_t
 USE MODD_PARAMETERS, ONLY: JPVEXT_TURB, XUNDEF
-USE MODD_TURB_n,     ONLY: TURB_t
+USE MODD_TURB_n,     ONLY: TURB_t, NCTP, NCTV, NCHT1, NCHT2, NCSHF, NCSV, NCEP, NCMFS, NCED, NBL89EXP, NUSRBL89, NTURB_S, &
+                           XCTP, XCED, XCSHF, XCTV, XCHV, XCHT1, XCHT2, XBL89EXP, XUSRBL89
 USE MODD_NEB_n,      ONLY: NEB_t
 !
 USE MODE_BL89,                ONLY: BL89
@@ -406,6 +407,7 @@ REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT),OPTIONAL     ::  PDRVS_TURB   ! evolu
 REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT),OPTIONAL     ::  PDRTHLS_TURB ! evolution of rhoJ*thl by turbulence only
 REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT),OPTIONAL     ::  PDRRTS_TURB  ! evolution of rhoJ*rt  by turbulence only
 REAL, DIMENSION(D%NIJT,D%NKT,KSV), INTENT(OUT),OPTIONAL ::  PDRSVS_TURB  ! evolution of rhoJ*Sv  by turbulence only
+REAL, DIMENSION(D%NIJT,NTURB_S), INTENT(IN),OPTIONAL    ::  PTURB_SPP
 REAL, DIMENSION(D%NIJT,D%NKT), INTENT(IN)      ::  PFLXZTHVMF
 !                                           MF contribution for vert. turb. transport
 !                                           used in the buoy. prod. of TKE
@@ -515,6 +517,7 @@ TYPE(TFIELDMETADATA) :: TZFIELD
 REAL, DIMENSION(D%NIJT,D%NKT,MERGE(KSV+KRR,KSV,TURBN%LTURB_PRECIP)) :: ZWORKT, ZWORKS
 REAL, DIMENSION(D%NIJT,      MERGE(KSV+KRR,KSV,TURBN%LTURB_PRECIP)) :: ZWORKSFSV
 REAL, DIMENSION(D%NIJT,D%NKT,MERGE(KSV+KRR,KSV,TURBN%LTURB_PRECIP)) :: ZWORKWSV
+REAL, DIMENSION(D%NIJT,NTURB_S)                                     ::  ZTURB_SPP
 INTEGER :: ISV
 !
 !*      1.PRELIMINARIES
@@ -776,6 +779,25 @@ IF(PRESENT(PDRUS_TURB)) THEN
   PDRRTS_TURB(:,:)  = PRRS(:,:,1)
   PDRSVS_TURB(:,:,:)  = PRSVS(:,:,:)
 END IF
+
+
+IF(PRESENT(PTURB_SPP)) THEN
+   ZTURB_SPP(:,:) = PTURB_SPP(:,:)
+ELSE
+   ZTURB_SPP(:,NCTP) = XCTP
+   ZTURB_SPP(:,NCTV) = XCTV
+   ZTURB_SPP(:,NCHT1) = XCHT1
+   ZTURB_SPP(:,NCHT2) = XCHT2
+   ZTURB_SPP(:,NCSHF) = XCSHF
+   ZTURB_SPP(:,NCSV) = XCSHF
+   ZTURB_SPP(:,NCEP) = XCEP
+   ZTURB_SPP(:,NCMFS) = XCMFS
+   ZTURB_SPP(:,NCED) = XCED
+   ZTURB_SPP(:,NBL89EXP) = XBL89EXP
+   ZTURB_SPP(:,NUSRBL89) = XUSRBL89
+END IF
+
+
 !----------------------------------------------------------------------------
 !
 !*      3. MIXING LENGTH : SELECTION AND COMPUTATION
@@ -793,7 +815,7 @@ SELECT CASE (TURBN%CTURBLEN)
 
     ZSHEAR(:,:)=0.
 
-    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN)
+    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN,PTURB_SPP)
   !
   !*      3.2 RM17 mixing length
   !           ------------------
@@ -814,7 +836,7 @@ SELECT CASE (TURBN%CTURBLEN)
       END DO
     END DO
     
-    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN)
+    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN,PTURB_SPP)
   !
   !*      3.3 Grey-zone combined RM17 & Deardorff mixing lengths
   !           --------------------------------------------------
@@ -836,7 +858,7 @@ SELECT CASE (TURBN%CTURBLEN)
       END DO
     END DO
     
-    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN)
+    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN,PTURB_SPP)
 
     CALL DELT(D, TURBN, O2D, .FALSE., GOCEAN, PZZ, PDYY, PDXX, PDIRCOSZW, ZLMW)
     ! The minimum mixing length is chosen between Horizontal grid mesh (not taking into account the vertical grid mesh) and RM17.
@@ -909,7 +931,7 @@ IF (OCLOUDMODIFLM) CALL CLOUD_MODIF_LM(D, CST, CSTURB, TURBN, TPFILE, TZFIELD, K
   & PDZZ, PDXX, PDYY, PZZ, &
   & PRT, PTKET, PTHLT, ZTHLM, ZRM, PTHVREF, &
   & ZLOCPEXNM, PSRCT, PCOEF_AMPL_SAT, ZAMOIST, ZATHETA, PDIRCOSZW,  &
-  & PCEI, PCEI_MIN, PCEI_MAX, ZLM)
+  & PCEI, PCEI_MIN, PCEI_MAX, ZLM, PTURB_SPP)
 ENDIF  ! end LHARRAT
 
 !
@@ -957,7 +979,7 @@ IF (TURBN%LRMC01) THEN
     
     CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRVM,PSFTH,ZSFRV,ZLMO)
   END IF
-  CALL RMC01(D,CST,CSTURB,TURBN,PZZ,PDXX,PDYY,PDZZ,PDIRCOSZW,PSBL_DEPTH,ZLMO,ZLM,ZLEPS)
+  CALL RMC01(D,CST,CSTURB,TURBN,PZZ,PDXX,PDYY,PDZZ,PDIRCOSZW,PSBL_DEPTH,ZLMO,PTURB_SPP,ZLM,ZLEPS)
 END IF
 !
 !RMC01 is only applied on RM17 in HM21
@@ -1181,7 +1203,7 @@ CALL TURB_VER(D,CST,CSTURB,TURBN,NEBN,TLES,              &
           PRUS,PRVS,PRWS,PRTHLS,PRRS,ZWORKS,             &
           PDP,PTP,PSIGS,PWTH,PWRC,ZWORKWSV,              &
           PSSTFL, PSSTFL_C, PSSRFL_C,PSSUFL_C,PSSVFL_C,  &
-          PSSUFL,PSSVFL                                  )
+          PSSUFL,PSSVFL,PTURB_SPP                        )
 
 !IF (HCLOUD == 'LIMA') THEN
 !   IF (KSV_LIMA_NR.GT.0) PRSVS(:,:,KSV_LIMA_NR) = ZRSVS(:,:,KSV_LIMA_NR) 
@@ -1355,7 +1377,7 @@ IF( TURBN%CTURBDIM == '3DIM' ) THEN
           PUT,PVT,PWT,ZUSLOPE,ZVSLOPE,PTHLT,PRT,ZWORKT,        &
           PTKET,ZLM,ZLEPS,                                     &
           ZLOCPEXNM,ZATHETA,ZAMOIST,PSRCT,ZFRAC_ICE,           &
-          PDP,PTP,PSIGS,                                       &
+          PTURB_SPP,PDP,PTP,PSIGS,                             &
           ZTRH,                                                &
           PRUS,PRVS,PRWS,PRTHLS,PRRS,ZWORKS                    )
   !
@@ -1610,7 +1632,8 @@ CALL TKE_EPS_SOURCES(D,CST,CSTURB,BUCONF,TURBN,TLES,                    &
                    & PSFU,PSFV,                                         &
                    & PTP,PRTKES,PRTHLS,ZCOEF_DISS,PTDIFF,PTDISS,ZRTKEMS,&
                    & TBUDGETS,KBUDGETS, PEDR=PEDR, PTR=PTR,PDISS=PDISS, &
-                   & PCURRENT_TKE_DISS=PCURRENT_TKE_DISS                )
+                   & PCURRENT_TKE_DISS=PCURRENT_TKE_DISS,               &
+                   & PTURB_SPP=PTURB_SPP                                )
                    !
 
 !
