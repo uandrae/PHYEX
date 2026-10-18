@@ -152,7 +152,7 @@ ELSE
   DO JK=1,IKT
      DO JJ=1,IJT
         DO JI=1,IIT
-           ZCSV(JI,JJ,JK)=TURB%XCHF
+           ZCSV(JI,JJ,JK)=TURBN%XCHF
 !          ZCSV(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCHF)
         ENDDO
      ENDDO
