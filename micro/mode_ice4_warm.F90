@@ -12,7 +12,7 @@ SUBROUTINE ICE4_WARM(CST, PARAMI, ICEP, ICED, KPROMA, KSIZE, LDSOFT, LDCOMPUTE, 
                     &PHLC_LCF, PHLC_HCF, PHLC_LRC, PHLC_HRC, &
                     &PCF, PRF, &
                     &PRVT, PRCT, PRRT, PCONC, PACRF, &
-                    &PRCAUTR, PRCACCR, PRREVAV,PRCRIAUTC)
+                    &PRCAUTR, PRCACCR, PRREVAV, PRCRIAUTC)
 !!
 !!**  PURPOSE
 !!    -------
