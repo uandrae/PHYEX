@@ -156,9 +156,6 @@ DO JL=1, KSIZE
         PRVDEPS(JL) = ( PSSI(JL)/(PRHODREF(JL)*PAI(JL)) ) *                               &
                    ( ICEP%X0DEPS*PLBDAS(JL)**ICEP%XEX0DEPS + ICEP%X1DEPS*PCJ(JL)*PLBDAS(JL)**ICEP%XEX1DEPS )
         PRVDEPS(JL) = PRVDEPS(JL)*ZREDSN
-!       Check this before merge UA
-!       REDPSRED = RAIN_ICE_PARAMN%XRDEPSRED which is not ZREDSN
-!       PRVDEPS(JL) = PRVDEPS(JL)*PRDEPSRED(JL)
       ELSE
         PRVDEPS(JL) = ( PRST(JL)*(PSSI(JL)/PAI(JL)) ) *                               &
                       ( ICEP%X0DEPS*PLBDAS(JL)**(ICED%XBS+ICEP%XEX0DEPS) + ICEP%X1DEPS*PCJ(JL) * &
@@ -232,9 +229,6 @@ DO JL=1, KSIZE
       PRVDEPG(JL) = ( PSSI(JL)/(PRHODREF(JL)*PAI(JL)) ) *                               &
                  ( ICEP%X0DEPG*PLBDAG(JL)**ICEP%XEX0DEPG + ICEP%X1DEPG*PCJ(JL)*PLBDAG(JL)**ICEP%XEX1DEPG )
       PRVDEPG(JL) = PRVDEPG(JL)*ZREDGR
-!     Check this before merge, UA
-!     PRDEPGRED = RAIN_ICE_PARAMN%XRDEPSRED which is not ZREDGR
-!     PRVDEPG(JL) = PRVDEPG(JL)*PRDEPGRED(JL)
     ENDIF
   ELSE
     PRVDEPG(JL) = 0.

@@ -221,9 +221,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
           ZZW(JL) = (PSSI(JL)/(PRHODREF(JL)*PAI(JL))) *  &
                     (ICEP%X0DEPS*PLDBAS(JL)**ICEP%XEX0DEPS + ICEP%X1DEPS*PCJ(JL)*PLDBAS(JL)**ICEP%XEX1DEPS)
           ZZW(JL) = MIN( PZRVS(JL),MAX(-PRSS(JL),ZZW(JL)))  ! Simpler
-          ZZW(JL) = ZZW(JL)*ZREDSN ! Possible tuning by using ( pertrubed ) ZREDSN /= 1
-          ! Check this before final merge UA
-          !ZZW(JL) = ZZW(JL)*ZZRDEPSRED(JL) ! Possible tuning by using ( pertrubed ) ZREDSN /= 1
+          ZZW(JL) = ZZW(JL)*ZREDSN ! Possible tuning by using ZREDSN /=  1
           PRSS(JL) = PRSS(JL) + ZZW(JL)
           PZRVS(JL) = PZRVS(JL) - ZZW(JL)
           PZTHS(JL) = PZTHS(JL) + ZZW(JL)*PLSFACT(JL)
