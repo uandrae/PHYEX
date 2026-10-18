@@ -480,7 +480,8 @@ IF(PARAMI%LWARM) THEN    !  Check if the formation of the raindrops by the slow
                 &PCF, PRAINFR, &
                 &ZVART(:,IRV), ZVART(:,IRC), ZVART(:,IRR), &
                 &ZCONC, ZACRF, &
-                &PBU_INST(:, IRCAUTR), PBU_INST(:, IRCACCR), PBU_INST(:, IRREVAV), PRCRIAUTC)
+                &PBU_INST(:, IRCAUTR), PBU_INST(:, IRCACCR), PBU_INST(:, IRREVAV), &
+                &PRCRIAUTC)
 ELSE
 
   PBU_INST(:, IRCAUTR)=0.
