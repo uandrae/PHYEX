@@ -261,7 +261,7 @@ INTEGER,                INTENT(IN)   :: KSV           ! number of scalar var.
 INTEGER,                INTENT(IN)   :: KRRL          ! number of liquid water var.
 INTEGER,                INTENT(IN)   :: KRRI          ! number of ice water var.
 LOGICAL,                INTENT(IN)   ::  OCOUPLES     ! switch to activate atmos-ocean LES
-LOGICAL,                INTENT(IN)   ::  OCOMPUTE_SRC ! flag to define dimensions of SIGS and version
+LOGICAL,                INTENT(IN)   ::  OCOMPUTE_SRC ! flag to define dimensions of SIGS and version 
 REAL,                   INTENT(IN)   ::  PEXPL        ! Coef. for temporal disc.
 TYPE(TFILEDATA),        INTENT(INOUT)   ::  TPFILE       ! Output file
 !
@@ -346,10 +346,10 @@ REAL, DIMENSION(D%NIJT,D%NKT)  ::  &
        ZWKPHIPSI3,ZWKPHIPSI4,&        ! working var. for shuman operators (array syntax)
        ZWKLES       ! working var. for LES calls
 
-INTEGER             :: IIJB, IIJE, IKB,IKE,IKT,IKA ! index value for the mass points of the domain
+INTEGER             :: IIJB, IIJE, IKB,IKE,IKT,IKA ! index value for the mass points of the domain 
 INTEGER             :: IKU  ! array sizes
 INTEGER             :: IKL
-INTEGER             :: JIJ, JK ! loop indexes
+INTEGER             :: JIJ, JK ! loop indexes 
 
 REAL, DIMENSION(D%NIJT,MIN(D%NKA+JPVEXT_TURB*D%NKL,D%NKA+JPVEXT_TURB*D%NKL+2*D%NKL):&
                             MAX(D%NKA+JPVEXT_TURB*D%NKL,D%NKA+JPVEXT_TURB*D%NKL+2*D%NKL))&
@@ -358,6 +358,7 @@ REAL, DIMENSION(D%NIJT,MIN(D%NKA+JPVEXT_TURB*D%NKL,D%NKA+JPVEXT_TURB*D%NKL+2*D%N
                                     ! computation near the ground, defined in
                                     ! mass points of the domain in the 3 direct.
 !
+REAL, DIMENSION(D%NIJT,NTURB_S) ::  ZTURB_SPP    ! SPP for turbulence
 REAL, DIMENSION(D%NIJT) :: ZCHT1, ZCHT2
 REAL :: ZTIME1, ZTIME2
 !
@@ -387,8 +388,14 @@ REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 IF (LHOOK) CALL DR_HOOK('TURB_VER_THERMO_CORR',0,ZHOOK_HANDLE)
 !
 DO JIJ=IIJB, IIJE
-   ZCHT1(JIJ)=PTURB_SPP(JIJ,NCHT1)
-   ZCHT2(JIJ)=PTURB_SPP(JIJ,NCHT2)
+   ZCHT1(JIJ)=TURBN%XCHT1
+!   ZCHT1(JIJ)=PTURB_SPP(JIJ,NCHT1)
+   ZCHT2(JIJ)=TURBN%XCHT2
+!  ZCHT2(JIJ)=PTURB_SPP(JIJ,NCHT2)
+
+!  Copy
+   ZTURB_SPP(JIJ,NCTV) = PTURB_SPP(JIJ,NCTV)
+   PTURB_SPP(JIJ,NCTV) = TURBN%XCTV
 END DO
 
 IKB=D%NKB
@@ -1659,6 +1666,12 @@ CALL LES_MEAN_SUBGRID_PHY(D, TLES, ZWKLES, TLES%X_LES_RES_W_SBG_Rt2 )
     END DO
 
   END IF
+
+DO JIJ=IIJB, IIJE
+!  Copy back
+   PTURB_SPP(JIJ,NCTV) = ZTURB_SPP(JIJ,NCTV)
+END DO
+
 
 !
 !        4.6  Deallocate

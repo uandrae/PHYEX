@@ -138,19 +138,26 @@ IJT=D%NJT
 IKT=D%NKT
 CALL SECOND_MNH(ZTIME1)
 !
-DO JK=1,IKT
-   DO JJ=1,IJT
-      DO JI=1,IIT
-         IF(OBLOWSNOW) THEN
-         ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
-            ZCSV(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCHF)/PRSNOW
-         ELSE
-            ZCSV(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCHF)
-         ENDIF
-      ENDDO
-   ENDDO
-ENDDO
-
+IF(OBLOWSNOW) THEN
+  ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
+  DO JK=1,IKT
+     DO JJ=1,IJT
+        DO JI=1,IIT
+           ZCSV(JI,JJ,JK)=TURBN%XCHF/PRSNOW
+!          ZCSV(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCHF)/PRSNOW
+        ENDDO
+     ENDDO
+  ENDDO
+ELSE
+  DO JK=1,IKT
+     DO JJ=1,IJT
+        DO JI=1,IIT
+           ZCSV(JI,JJ,JK)=TURB%XCHF
+!          ZCSV(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCHF)
+        ENDDO
+     ENDDO
+  ENDDO
+ENDIF
 !
 DO JSV=1,KSV
 !

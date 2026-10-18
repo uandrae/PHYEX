@@ -358,14 +358,18 @@ ELSE
   CALL MZM_PHY(D,ZWORK1,ZKEFF)
 ENDIF
 !
-DO JIJ=IIJB, IIJE
-   IF(OBLOWSNOW) THEN
-   ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
-      ZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)/PRSNOW
-   ELSE
-      ZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)
-   ENDIF
-END DO
+IF(OBLOWSNOW) THEN
+! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
+  DO JIJ=IIJB, IIJE
+     ZCSV(JIJ)=TURBN%XCHF/PRSNOW
+!    ZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)/PRSNOW
+  ENDDO
+ELSE
+  DO JIJ=IIJB, IIJE
+     ZCSV(JIJ)=TURBN%XCHF
+!    ZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)
+  ENDDO
+ENDIF
 !----------------------------------------------------------------------------
 !
 !*       8.   SOURCES OF PASSIVE SCALAR VARIABLES

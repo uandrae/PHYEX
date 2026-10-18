@@ -192,7 +192,7 @@ INTEGER             :: IKB,IKE
                                     ! Index values for the Beginning and End
                                     ! mass points of the domain  
 INTEGER             :: IKU,IKT,IIT,IJT                                   
-INTEGER             :: JSV,JI,JJ,JK      ! scalar loop counter
+INTEGER             :: JSV,JI,JJ,JK          ! scalar loop counter
 !
 REAL, DIMENSION(D%NIT,D%NJT,D%NKT)  :: GX_U_M_PUM
 REAL, DIMENSION(D%NIT,D%NJT,D%NKT)  :: GY_V_M_PVM
@@ -267,7 +267,8 @@ IKT=D%NKT
 DO JK=1,IKT
    DO JJ=1,IJT
       DO JI=1,IIT
-         ZCMFS(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCMFS)
+!        ZCMFS(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCMFS)
+         ZCMFS(JI,JJ,JK)=XCMFS
       END DO
    END DO
 END DO
