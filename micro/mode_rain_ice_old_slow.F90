@@ -223,8 +223,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
           ZZW(JL) = (PSSI(JL)/(PRHODREF(JL)*PAI(JL))) *  &
                     (ICEP%X0DEPS*PLDBAS(JL)**ICEP%XEX0DEPS + ICEP%X1DEPS*PCJ(JL)*PLDBAS(JL)**ICEP%XEX1DEPS)
           ZZW(JL) = MIN( PZRVS(JL),MAX(-PRSS(JL),ZZW(JL)))  ! Simpler
-          ZZW(JL) = ZZW(JL)*ZREDSN ! Possible tuning by using ZREDSN /=  1
-!         ZZW(JL) = ZZW(JL)*ZZRDEPSRED(JL) ! Possible tuning
+          ZZW(JL) = ZZW(JL)*ZZRDEPSRED(JL) ! Possible tuning by using ( pertrubed ) ZREDSN /= 1
           PRSS(JL) = PRSS(JL) + ZZW(JL)
           PZRVS(JL) = PZRVS(JL) - ZZW(JL)
           PZTHS(JL) = PZTHS(JL) + ZZW(JL)*PLSFACT(JL)
@@ -239,8 +238,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
                   - MIN(PRSS(JL),ABS(ZZW(JL)))*(0.5-SIGN(0.5,ZZW(JL)))
 
           IF (ZZW(JL) < 0.0) THEN
-            ZZW(JL) = ZZW(JL) * ICEP%XRDEPSRED
-!           ZZW(JL) = ZZW(JL) * ZZRDEPSRED(JL)
+            ZZW(JL) = ZZW(JL) * ZZRDEPSRED(JL)
           END IF
 
           PRSS(JL) = PRSS(JL) + ZZW(JL)
@@ -283,8 +281,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
 !*       3.4.5  compute the autoconversion of r_i for r_s production: RIAUTS
 
-    ZCRIAUTI(:)=MIN(ICEP%XCRIAUTI,10**(ICEP%XACRIAUTI*(PZT(:)-CST%XTT)+ICEP%XBCRIAUTI))
-!   ZCRIAUTI(:)=MIN(ZZRCRIAUTI(:),10**(ZXACRIAUTI(:)*(PZT(:)-CST%XTT)+ZXBCRIAUTI(:)))
+    ZCRIAUTI(:)=MIN(ZZRCRIAUTI(:),10**(ZXACRIAUTI(:)*(PZT(:)-CST%XTT)+ZXBCRIAUTI(:)))
     ZZW(:) = 0.0
     IF (BUCONF%LBUDGET_RI) ZWKBUD(:,:) = UNPACK(PRIS(:)*PZRHODJ(:),MASK=GMICRO(:,:),FIELD=0.0)
     IF (BUCONF%LBUDGET_RI) CALL TBUDGETS(NBUDGET_RI)%PTR%INIT_PHY(D, 'AUTS', ZWKBUD)
@@ -374,12 +371,10 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
         ZZW(JL) = MIN(PZRVS(JL),ZZW(JL)      )*(0.5+SIGN(0.5,ZZW(JL))) &
                 - MIN(PRGS(JL),ABS(ZZW(JL)) )*(0.5-SIGN(0.5,ZZW(JL)))
-        ZZW(JL) = ZZW(JL)*ZREDGR
-!       ZZW(JL) = ZZW(JL)*ZZRDEPGRED(JL)
+        ZZW(JL) = ZZW(JL)*ZZRDEPGRED(JL)
 
         IF (ZZW(JL) < 0.0 ) THEN
-          ZZW(JL)  = ZZW(JL) * ICEP%XRDEPGRED
-!         ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
+          ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
         END IF
 
         PRSS(JL) = (ZZW(JL) + PRGS(JL))* ZZW2(JL) + PRSS(JL)
@@ -391,8 +386,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
     DO JL = 1, KSIZE
       IF (ZZW(JL) < 0.0) THEN
-        ZZW(JL)  = ZZW(JL) * ICEP%XRDEPGRED
-!       ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
+        ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
       END IF
     END DO
 
