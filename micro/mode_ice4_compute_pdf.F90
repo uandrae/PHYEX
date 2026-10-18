@@ -78,7 +78,7 @@ REAL, DIMENSION(KSIZE) :: ZRCRAUTC,      & !RC value to begin rain formation =XC
                                                     !                     = PHLC_HRC/HCF+ PHLC_LRC/LCF
                           ZSUMRC, ZSUMRI
 REAL, DIMENSION(KSIZE) :: ZXACRIAUTI, ZXBCRIAUTI
-REAL :: ZCOEFFRCM,ZTCRI0,ZCRI0
+REAL :: ZCOEFFRCM
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 INTEGER :: JL
 !-------------------------------------------------------------------------------
@@ -91,13 +91,6 @@ IF (LHOOK) CALL DR_HOOK('ICE4_COMPUTE_PDF', 0, ZHOOK_HANDLE)
 !
 !Cloud water split between high and low content part is done according to autoconversion option
 IF(PARAMI%LCRIAUTI) THEN
-!  ZTCRI0=-40.0
-!  ZCRI0=1.25E-6
-!  DO JL=1, KSIZE
-!   ZXBCRIAUTI(JL)=-( LOG10(PRCRIAUTI(JL)) - LOG10(ZCRI0)*ICEP%XT0CRIAUTI/ZTCRI0 )&
-!                  *ZTCRI0/(ICEP%XT0CRIAUTI-ZTCRI0)
-!   ZXACRIAUTI(JL)=(LOG10(ZCRI0)-ZXBCRIAUTI(JL))/ZTCRI0
-!  ENDDO
    CALL CRIAUTI(PRCRIAUTI, ICEP%XT0CRIAUTI, ZXACRIAUTI, ZXBCRIAUTI)
 ELSE
    ZXACRIAUTI(:)=PARAMI%XACRIAUTI_NAM

@@ -218,7 +218,7 @@ REAL, DIMENSION(D%NIJT,D%NKT) &
                             ZLV,  &  ! guess of the Lv at t+1
                             ZLS      ! guess of the Ls at t+1
 REAL :: ZCRIAUT, & ! Autoconversion thresholds
-        ZHCF, ZHR, ZEPS, ZTCRI0,ZCRI0
+        ZHCF, ZHR, ZEPS
 !
 INTEGER             :: JITER,ITERMAX ! iterative loop for first order adjustment
 INTEGER             :: JIJ, JK

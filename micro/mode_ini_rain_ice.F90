@@ -178,7 +178,6 @@ INTEGER :: IND                ! Number of interval to integrate the kernels
 REAL :: ZESR                  ! Mean efficiency of rain-aggregate collection
 REAL :: ZFDINFTY              ! Factor used to define the "infinite" diameter
 !
-REAL :: ZCRI0, ZTCRI0         ! Second point to determine 10**(aT+b) law of ri->rs autoconversion
 !
 !
 !
@@ -679,21 +678,7 @@ XTEXAUTI = 0.015  !  Temperature factor of the I+I collection efficiency
 XCRIAUTI = XCRIAUTI_NAM
 IF(LCRIAUTI) THEN
   XT0CRIAUTI = XT0CRIAUTI_NAM
-  !second point to determine 10**(aT+b) law
-  ZTCRI0=-40.0
-  ZCRI0=1.25E-6
-  XBCRIAUTI=-( LOG10(XCRIAUTI) - LOG10(ZCRI0)*XT0CRIAUTI/ZTCRI0 )&
-                   *ZTCRI0/(XT0CRIAUTI-ZTCRI0)
-  XACRIAUTI=(LOG10(ZCRI0)-XBCRIAUTI)/ZTCRI0
-  XBCRIAUTI_CHECK = XBCRIAUTI
-  XACRIAUTI_CHECK = XACRIAUTI
   CALL CRIAUTI(XCRIAUTI, XT0CRIAUTI, XACRIAUTI, XBCRIAUTI)
-  IF ( XACRIAUTI /= XACRIAUTI_CHECK .OR. XBCRIAUTI /= XBCRIAUTI_CHECK ) THEN
-          WRITE(6,*)'XACRIAUTI_CHECK,XACRIAUTI',XACRIAUTI_CHECK,XACRIAUTI
-          WRITE(6,*)'XBCRIAUTI_CHECK,XBCRIAUTI',XBCRIAUTI_CHECK,XBCRIAUTI
-          CALL FLUSH(6)
-          CALL ABOR1("XABCRIAUTI differs")
-  ENDIF
 ELSE
   XACRIAUTI=XACRIAUTI_NAM
   XBCRIAUTI=XBCRIAUTI_NAM

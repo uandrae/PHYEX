@@ -83,7 +83,6 @@ REAL, DIMENSION(KPROMA),      INTENT(IN)    :: PRDEPGRED! SPP for microphysics
 REAL, DIMENSION(KPROMA) :: ZCRIAUTI, ZXACRIAUTI, ZXBCRIAUTI
 INTEGER                 :: JL
 REAL            :: ZREDGR,ZREDSN
-REAL            :: ZTCRI0,ZCRI0
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 !-------------------------------------------------------------------------------
 !
@@ -105,13 +104,6 @@ ENDIF
 
 !Cloud water split between high and low content part is done according to autoconversion option
 IF(PARAMI%LCRIAUTI) THEN
-!  ZTCRI0=-40.0
-!  ZCRI0=1.25E-6
-!  DO JL=1, KSIZE
-!   ZXBCRIAUTI(JL)=-( LOG10(PRCRIAUTI(JL)) - LOG10(ZCRI0)*ICEP%XT0CRIAUTI/ZTCRI0 )&
-!                  *ZTCRI0/(ICEP%XT0CRIAUTI-ZTCRI0)
-!   ZXACRIAUTI(JL)=(LOG10(ZCRI0)-ZXBCRIAUTI(JL))/ZTCRI0
-!  ENDDO
    CALL CRIAUTI(PRCRIAUTI, ICEP%XT0CRIAUTI, ZXACRIAUTI, ZXBCRIAUTI)
 ELSE
    ZXACRIAUTI(:)=PARAMI%XACRIAUTI_NAM

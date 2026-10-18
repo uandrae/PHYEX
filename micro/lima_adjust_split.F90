@@ -248,7 +248,6 @@ REAL, DIMENSION(D%NIJT,D%NKT) &
                             ZWTOT, &
                             ZWR, ZWS, ZWG
 !
-REAL                     :: ZTCRI0,ZCRI0
 REAL, DIMENSION(D%NIJT)  :: ZXACRIAUTI, ZXBCRIAUTI 
 !
 INTEGER, DIMENSION(D%NIJT,D%NKT) :: IVEC1
