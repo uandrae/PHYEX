@@ -147,7 +147,7 @@ IF (KRRL > 0)  THEN
       ELSE
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
-            ZFLXZ(JIJ, JK) = -2 * PXCTV(JIJ)* PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
+            ZFLXZ(JIJ, JK) = -2 * TURBN%XCTV* PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
                                  & (PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * ZWK(JIJ, JK)
           END DO
         END DO
@@ -155,7 +155,7 @@ IF (KRRL > 0)  THEN
     ELSE
       DO JK=1, IKT
         DO JIJ=IIJB, IIJE
-          ZFLXZ(JIJ, JK) = -2  *PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
+          ZFLXZ(JIJ, JK) = -2 * PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
                                & (PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * ZWK(JIJ, JK)
         END DO
       END DO
@@ -196,7 +196,7 @@ IF (KRRL > 0)  THEN
       ELSE
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
-            ZFLXZ2(JIJ, JK) = -2 * PXCTV(JIJ) * PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
+            ZFLXZ2(JIJ, JK) = -2 * TURBN%XCTV * PARAMMF%XTAUSIGMF * PEMF(JIJ, JK)* &
                                  & (PRT_UP(JIJ, JK)-ZFLXZ2(JIJ, JK)) * ZWK2(JIJ, JK)
           END DO
         END DO
@@ -240,7 +240,7 @@ IF (KRRL > 0)  THEN
       ELSE
         DO JK=1, IKT
           DO JIJ=IIJB, IIJE
-            ZFLXZ3(JIJ, JK) = - PXCTV(JIJ) * PARAMMF%XTAUSIGMF * &
+            ZFLXZ3(JIJ, JK) = - TURBN%XCTV * PARAMMF%XTAUSIGMF * &
                           (PEMF(JIJ, JK)*(PRT_UP(JIJ, JK)-ZFLXZ2(JIJ, JK)) * &
                                          ZWK(JIJ, JK) + &
                                          PEMF(JIJ, JK)*(PTHL_UP(JIJ, JK)-ZFLXZ(JIJ, JK)) * &

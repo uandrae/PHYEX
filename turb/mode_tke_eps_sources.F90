@@ -295,7 +295,7 @@ END IF
 !
 DO JK=1, IKT
   DO JIJ=IIJB, IIJE
-    ZFLX(JIJ, JK) = PTURB_SPP(JIJ,NCED) * SQRT(PTKEM(JIJ, JK)) / PLEPS(JIJ, JK)
+    ZFLX(JIJ, JK) = TURBN%XCED * SQRT(PTKEM(JIJ, JK)) / PLEPS(JIJ, JK)
     ZSOURCE(JIJ, JK) = ( PRTKES(JIJ, JK) +  PRTKEMS(JIJ, JK) ) &
                                          / PRHODJ(JIJ, JK) - PTKEM(JIJ, JK) / PTSTEP &
        + PDP(JIJ, JK) + PTP(JIJ, JK) + ZTR(JIJ, JK) & 
@@ -469,7 +469,7 @@ IF (BUCONF%LBUDGET_TKE) THEN
   
   DO JK=1, IKT
     DO JIJ=IIJB, IIJE
-      ZMWORK1(JIJ, JK) = -PTURB_SPP(JIJ,NCED) * SQRT(PTKEM(JIJ, JK))/PLEPS(JIJ, JK) * &
+      ZMWORK1(JIJ, JK) = -TURBN%XCED * SQRT(PTKEM(JIJ, JK))/PLEPS(JIJ, JK) * &
                     (PEXPL*PTKEM(JIJ, JK) + TURBN%XIMPL*ZRES(JIJ, JK))*PRHODJ(JIJ, JK)
     END DO
   END DO
@@ -486,7 +486,7 @@ DO JK=1, IKT
   DO JIJ=IIJB, IIJE
     PRTKES(JIJ, JK) = PRTKES(JIJ, JK) + PRHODJ(JIJ, JK) * &
                     ( PDP(JIJ, JK) + PTP(JIJ, JK)                           &
-                      - PTURB_SPP(JIJ,NCED) * SQRT(PTKEM(JIJ, JK)) / PLEPS(JIJ, JK) &
+                      - TURBN%XCED * SQRT(PTKEM(JIJ, JK)) / PLEPS(JIJ, JK) &
                       * ( PEXPL*PTKEM(JIJ, JK) + TURBN%XIMPL*ZRES(JIJ, JK) ) )
     !
     PTDIFF(JIJ, JK) =  ZRES(JIJ, JK) / PTSTEP - PRTKES(JIJ, JK)&
@@ -520,7 +520,7 @@ IF (BUCONF%LBUDGET_TKE) CALL TBUDGETS(NBUDGET_TKE)%PTR%END_PHY(D, 'TR', PRTKES)
 DO JK=1, IKT
   DO JIJ=IIJB, IIJE
     PRTHLS(JIJ, JK) = PRTHLS(JIJ, JK) + &
-                                        PTURB_SPP(JIJ,NCED) * SQRT(PTKEM(JIJ, JK)) / PLEPS(JIJ, JK) * &
+                                        TURBN%XCED * SQRT(PTKEM(JIJ, JK)) / PLEPS(JIJ, JK) * &
                     (PEXPL*PTKEM(JIJ, JK) + TURBN%XIMPL*ZRES(JIJ, JK)) &
                     * PRHODJ(JIJ, JK) * PCOEF_DISS(JIJ, JK)
   END DO
@@ -544,7 +544,7 @@ IF(PRESENT(PDISS)) THEN
 
   DO JK=1, IKT
     DO JIJ=IIJB, IIJE
-      PDISS(JIJ, JK) =  -PTURB_SPP(JIJ,NCED) * (PTKEM(JIJ, JK)**1.5) / PLEPS(JIJ, JK)
+      PDISS(JIJ, JK) =  -TURBN%XCED * (PTKEM(JIJ, JK)**1.5) / PLEPS(JIJ, JK)
     END DO
   END DO
 
@@ -554,7 +554,7 @@ IF(PRESENT(PEDR)) THEN
 
   DO JK=1, IKT
     DO JIJ=IIJB, IIJE
-      PEDR(JIJ, JK) = PTURB_SPP(JIJ,NCED) * (PTKEM(JIJ, JK)**1.5) / PLEPS(JIJ, JK)
+      PEDR(JIJ, JK) = TURBN%XCED * (PTKEM(JIJ, JK)**1.5) / PLEPS(JIJ, JK)
     END DO
   END DO
 
