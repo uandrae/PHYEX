@@ -301,7 +301,7 @@ REAL, DIMENSION(D%NIJT,D%NKT)  ::  &
        ZWORK1, &   ! working var. for shuman operators (array syntax)
        ZMZMRHODJ, &
        ZWKLES       ! working var. for LES calls
-REAL, DIMENSION(D%NIJT)  ::  ZZCSV     !constant for the scalar flux
+REAL, DIMENSION(D%NIJT)  ::  ZCSV     !constant for the scalar flux
 INTEGER             :: IKT          ! array size in k direction
 INTEGER             :: IIJB,IIJE,IKB,IKE,IKA ! index value for the mass points of the domain 
 INTEGER             :: IKTB,IKTE    ! start, end of k loops in physical domain
@@ -312,7 +312,6 @@ INTEGER             :: JIJ,JK           ! loop
 REAL :: ZTIME1, ZTIME2
 
 REAL :: ZCSVP = 4.0  ! constant for scalar flux presso-correlation (RS81)
-REAL :: ZCSV          !constant for the scalar flux
 !
 CHARACTER(LEN=NMNHNAMELGTMAX) :: YMNHNAME
 REAL(KIND=JPHOOK)             :: ZHOOK_HANDLE
@@ -361,14 +360,12 @@ ENDIF
 !
 IF(OBLOWSNOW) THEN
 ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
-   ZCSV=TURBN%XCHF/PRSNOW
   DO JIJ=IIJB, IIJE
-     ZZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)/PRSNOW
+     ZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)/PRSNOW
   ENDDO
 ELSE
-   ZCSV=TURBN%XCHF
   DO JIJ=IIJB, IIJE
-     ZZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)
+     ZCSV(JIJ)=PTURB_SPP(JIJ,NCHF)
   ENDDO
 ENDIF
 !----------------------------------------------------------------------------
@@ -395,7 +392,7 @@ DO JSV=1,KSV
 
       DO JK=1, IKT
         DO JIJ=IIJB, IIJE
-          ZA(JIJ, JK) = -PTSTEP*ZCSV*PPSI_SV(JIJ, JK, JSV) *   &
+          ZA(JIJ, JK) = -PTSTEP*ZCSV(JIJ)*PPSI_SV(JIJ, JK, JSV) *   &
                ZKEFF(JIJ, JK) * ZMZMRHODJ(JIJ, JK) / PDZZ(JIJ, JK)**2
         END DO
       END DO
@@ -474,7 +471,7 @@ CALL DZM_PHY(D, ZSHUGRADWK1_2D, ZDZM2D_WORK1)
 
 DO JK=1, IKT
   DO JIJ=IIJB, IIJE
-    ZFLXZ(JIJ, JK) = -ZCSV * PPSI_SV(JIJ, JK, JSV) * ZMZM2D_WORK1(JIJ, JK) / PDZZ(JIJ, JK) * &
+    ZFLXZ(JIJ, JK) = -ZCSV(JIJ) * PPSI_SV(JIJ, JK, JSV) * ZMZM2D_WORK1(JIJ, JK) / PDZZ(JIJ, JK) * &
                       ZDZM2D_WORK1(JIJ, JK)    
   END DO
 END DO
