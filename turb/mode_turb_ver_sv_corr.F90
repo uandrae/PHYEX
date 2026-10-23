@@ -146,7 +146,7 @@ IKT=D%NKT
 CALL SECOND_MNH(ZTIME1)
 !
 IF(OBLOWSNOW) THEN
-! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables          
+! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
   DO JIJ=IIJB, IIJE
      ZCSV(JIJ)= PTURB_SPP(JIJ,NCHF)/PRSNOW
   ENDDO
