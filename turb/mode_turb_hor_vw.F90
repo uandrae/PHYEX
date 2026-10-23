@@ -138,7 +138,7 @@ REAL, DIMENSION(D%NIT,D%NJT,D%NKT),   INTENT(INOUT) ::  PDP          ! TKE produ
 !
 !*       0.2  declaration of local variables
 !
-REAL, DIMENSION(D%NIT,D%NJT,D%NKT)  :: ZFLX,ZWORK,ZCMFS
+REAL, DIMENSION(D%NIT,D%NJT,D%NKT)  :: ZFLX,ZWORK
     ! work arrays
 !   
 INTEGER             :: IKB,IKE,IKU, IIT, IJT, IKT
@@ -188,13 +188,6 @@ IKU = SIZE(PWM,3)
 IIT=D%NIT
 IJT=D%NJT
 IKT=D%NKT 
-DO JK=1,IKT
-   DO JJ=1,IJT
-      DO JI=1,IIT
-         ZCMFS(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCMFS)
-      ENDDO
-   ENDDO
-ENDDO
 !
 !
 IF (.NOT. O2D) THEN
@@ -225,7 +218,7 @@ DO JK=1, IKT
   DO JJ=1, IJT
     DO JI=1, IIT
       ZFLX(JI, JJ, JK) =                                                      &
-          - ZCMFS(JI,JJ,JK) * ZMYM3D_WORK1(JI, JJ, JK) * GY_W_VW_PWM(JI, JJ, JK)
+          - PTURB_SPP(JI,JJ,NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) * GY_W_VW_PWM(JI, JJ, JK)
     END DO
   END DO
 END DO

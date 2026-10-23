@@ -152,7 +152,7 @@ REAL, DIMENSION(D%NIT,D%NJT,D%NKT),   INTENT(INOUT) ::  PDP          ! TKE produ
 !
 !*       0.2  declaration of local variables
 !
-REAL, DIMENSION(D%NIT,D%NJT,D%NKT) :: ZFLX,ZWORK, ZCMFS ! work arrays
+REAL, DIMENSION(D%NIT,D%NJT,D%NKT) :: ZFLX,ZWORK ! work arrays
 !   
 REAL, DIMENSION(D%NIT,D%NJT) :: ZDIRSINZW 
       ! sinus of the angle between the vertical and the normal to the orography
@@ -230,13 +230,6 @@ DO JJ=1, IJT
   END DO
 END DO
 
-DO JK=1,IKT
-   DO JJ=1,IJT
-      DO JI=1,IIT
-         ZCMFS(JI,JJ,JK)=PTURB_SPP(JI,JJ,NCMFS)
-      ENDDO
-   ENDDO
-ENDDO
 !
 CALL GX_V_UV_DEVICE(PVM,PDXX,PDZZ,PDZX, ZGX_V_UV3D_WORK1)
 
@@ -275,7 +268,7 @@ CALL MYM_PHY(D, ZMXM3D_WORK1, ZMYM3D_WORK1)
 DO JK=1, IKT
   DO JJ=1, IJT
     DO JI=1, IIT
-      ZFLX(JI, JJ, JK)= - ZCMFS(JI,JJ,JK) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
+      ZFLX(JI, JJ, JK)= - PTURB_SPP(JI,JJ,NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
                 (GY_U_UV_PUM(JI, JJ, JK) + GX_V_UV_PVM(JI, JJ, JK))
     END DO
   END DO
@@ -289,7 +282,7 @@ CALL MYM_PHY(D, ZMXM3D_WORK1, ZMYM3D_WORK1)
 DO JK=1, IKT
   DO JJ=1, IJT
     DO JI=1, IIT
-      ZFLX(JI, JJ, JK)= - ZCMFS(JI,JJ,JK) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
+      ZFLX(JI, JJ, JK)= - PTURB_SPP(JI,JJ,NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
                 (GX_V_UV_PVM(JI, JJ, JK))
     END DO
   END DO
@@ -376,7 +369,7 @@ CALL MYM2D_PHY(D, PDXX(:,:,IKB), ZMYM2D_WORK6)
 
 DO JJ=1, IJT
   DO JI=1, IIT
-    ZFLX(JI, JJ, IKB)   = - ZCMFS(JI,JJ,IKB) * ZMYM2D_WORK1(JI, JJ) *  (     &
+    ZFLX(JI, JJ, IKB)   = - PTURB_SPP(JI,JJ,NCMFS) * ZMYM2D_WORK1(JI, JJ) *  (     &
       ( ZDYM2D_WORK1(JI, JJ)                                        &
        -ZMYM2D_WORK2(JI, JJ)&
         *0.5*ZMXM2D_WORK3(JI, JJ)            &
