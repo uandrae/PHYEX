@@ -397,11 +397,6 @@ IIJB=D%NIJB
 !
 GUSERV = (KRR/=0)
 !
-DO JIJ=IIJB, IIJE
-   ZCHT1(JIJ)=PTURB_SPP(JIJ,NCHT1)
-   ZCHT2(JIJ)=PTURB_SPP(JIJ,NCHT2)
-END DO
-!
 !  compute the coefficients for the uncentred gradient computation near the
 !  ground
 
