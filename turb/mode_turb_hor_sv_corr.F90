@@ -104,7 +104,7 @@ REAL, DIMENSION(D%NIT,D%NJT,D%NKT),   INTENT(IN)    ::  PSRCM        ! normalize
                   ! 2nd-order flux s'r'c/2Sigma_s2 at t-1 multiplied by Lambda_3
 REAL, DIMENSION(D%NIT,D%NJT,D%NKT),   INTENT(IN)    ::  PWM          ! w at t-1
 REAL, DIMENSION(D%NIT,D%NJT,D%NKT,KSV), INTENT(IN)    ::  PSVM         ! scalar var. at t-1
-REAL, DIMENSION(D%NIT,D%NJT,NTURB_S), INTENT(IN)        ::  PTURB_SPP    ! SPP for turbulence 
+REAL, DIMENSION(D%NIT,D%NJT,D%NKT,NTURB_S), INTENT(IN)  ::  PTURB_SPP    ! SPP for turbulence
 !
 !
 !
@@ -143,13 +143,13 @@ IF(OBLOWSNOW) THEN
 ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
   DO JJ=1,IJT
      DO JI=1,IIT
-       ZCSV(JI,JJ)=PTURB_SPP(JI,JJ,NCHF)/PRSNOW
+       ZCSV(JI,JJ)=PTURB_SPP(JI,JJ,1,NCHF)/PRSNOW
      ENDDO
   ENDDO
 ELSE
   DO JJ=1,IJT
      DO JI=1,IIT
-       ZCSV(JI,JJ)=PTURB_SPP(JI,JJ,NCHF)
+       ZCSV(JI,JJ)=PTURB_SPP(JI,JJ,1,NCHF)
      ENDDO
   ENDDO
 ENDIF
