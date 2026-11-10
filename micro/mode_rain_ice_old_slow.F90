@@ -369,7 +369,7 @@ MODULE MODE_RAIN_ICE_OLD_SLOW
 
         ZZW(JL) = MIN(PZRVS(JL),ZZW(JL)      )*(0.5+SIGN(0.5,ZZW(JL))) &
                 - MIN(PRGS(JL),ABS(ZZW(JL)) )*(0.5-SIGN(0.5,ZZW(JL)))
-        ZZW(JL) = ZZW(JL)*ZZRDEPGRED(JL)
+        ZZW(JL) = ZZW(JL)*ZREDGR
 
         IF (ZZW(JL) < 0.0 ) THEN
           ZZW(JL)  = ZZW(JL) * ZZRDEPGRED(JL)
