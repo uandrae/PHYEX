@@ -218,7 +218,7 @@ DO JK=1, IKT
   DO JJ=1, IJT
     DO JI=1, IIT
       ZFLX(JI, JJ, JK) =                                                      &
-          - PTURB_SPP(JI,JJ,JK,NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) * GY_W_VW_PWM(JI, JJ, JK)
+          - PTURB_SPP(JI, JJ, JK, NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) * GY_W_VW_PWM(JI, JJ, JK)
     END DO
   END DO
 END DO

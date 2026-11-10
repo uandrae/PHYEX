@@ -361,11 +361,11 @@ ENDIF
 IF(OBLOWSNOW) THEN
 ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
   DO JIJ=IIJB, IIJE
-     ZCSV(JIJ)=PTURB_SPP(JIJ,1,NCHF)/PRSNOW
+     ZCSV(JIJ)=PTURB_SPP(JIJ, IKB, NCHF)/PRSNOW
   ENDDO
 ELSE
   DO JIJ=IIJB, IIJE
-     ZCSV(JIJ)=PTURB_SPP(JIJ,1,NCHF)
+     ZCSV(JIJ)=PTURB_SPP(JIJ, IKB, NCHF)
   ENDDO
 ENDIF
 !----------------------------------------------------------------------------

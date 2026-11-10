@@ -148,11 +148,11 @@ CALL SECOND_MNH(ZTIME1)
 IF(OBLOWSNOW) THEN
 ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
   DO JIJ=IIJB, IIJE
-     ZCSV(JIJ)= PTURB_SPP(JIJ,1,NCHF)/PRSNOW
+     ZCSV(JIJ)= PTURB_SPP(JIJ, IKT, NCHF)/PRSNOW
   ENDDO
 ELSE
   DO JIJ=IIJB, IIJE
-     ZCSV(JIJ)= PTURB_SPP(JIJ,1,NCHF)
+     ZCSV(JIJ)= PTURB_SPP(JIJ, IKT, NCHF)
   ENDDO
 ENDIF
 !
@@ -206,7 +206,7 @@ CALL GZ_M_W_PHY(D, PSVM(:,:,JSV),PDZZ, ZGZ_M_W2D_WORK2)
 
 DO JK=1, IKT
   DO JIJ=IIJB, IIJE
-    ZFLXZ(JIJ, JK)= ( PTURB_SPP(JIJ,JK,NCSHF) * PPHI3(JIJ, JK) + ZCSV(JIJ) * PPSI_SV(JIJ, JK, JSV) )              &
+    ZFLXZ(JIJ, JK)= ( PTURB_SPP(JIJ, JK, NCSHF) * PPHI3(JIJ, JK) + ZCSV(JIJ) * PPSI_SV(JIJ, JK, JSV) )              &
                       *  ZGZ_M_W2D_WORK1(JIJ, JK)                          &
                       *  ZGZ_M_W2D_WORK2(JIJ, JK)    
   END DO

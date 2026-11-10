@@ -268,7 +268,7 @@ CALL MYM_PHY(D, ZMXM3D_WORK1, ZMYM3D_WORK1)
 DO JK=1, IKT
   DO JJ=1, IJT
     DO JI=1, IIT
-      ZFLX(JI, JJ, JK)= - PTURB_SPP(JI,JJ,JK,NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
+      ZFLX(JI, JJ, JK)= - PTURB_SPP(JI, JJ, JK, NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
                 (GY_U_UV_PUM(JI, JJ, JK) + GX_V_UV_PVM(JI, JJ, JK))
     END DO
   END DO
@@ -282,7 +282,7 @@ CALL MYM_PHY(D, ZMXM3D_WORK1, ZMYM3D_WORK1)
 DO JK=1, IKT
   DO JJ=1, IJT
     DO JI=1, IIT
-      ZFLX(JI, JJ, JK)= - PTURB_SPP(JI,JJ,JK,NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
+      ZFLX(JI, JJ, JK)= - PTURB_SPP(JI, JJ, JK, NCMFS) * ZMYM3D_WORK1(JI, JJ, JK) *                           &
                 (GX_V_UV_PVM(JI, JJ, JK))
     END DO
   END DO
@@ -369,7 +369,7 @@ CALL MYM2D_PHY(D, PDXX(:,:,IKB), ZMYM2D_WORK6)
 
 DO JJ=1, IJT
   DO JI=1, IIT
-    ZFLX(JI, JJ, IKB)   = - PTURB_SPP(JI,JJ,1,NCMFS) * ZMYM2D_WORK1(JI, JJ) *  (     &
+    ZFLX(JI, JJ, IKB)   = - PTURB_SPP(JI, JJ, IKB, NCMFS) * ZMYM2D_WORK1(JI, JJ) *  (     &
       ( ZDYM2D_WORK1(JI, JJ)                                        &
        -ZMYM2D_WORK2(JI, JJ)&
         *0.5*ZMXM2D_WORK3(JI, JJ)            &

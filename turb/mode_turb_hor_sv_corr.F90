@@ -143,13 +143,13 @@ IF(OBLOWSNOW) THEN
 ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables
   DO JJ=1,IJT
      DO JI=1,IIT
-       ZCSV(JI,JJ)=PTURB_SPP(JI,JJ,1,NCHF)/PRSNOW
+       ZCSV(JI,JJ)=PTURB_SPP(JI, JJ, IKT, NCHF)/PRSNOW
      ENDDO
   ENDDO
 ELSE
   DO JJ=1,IJT
      DO JI=1,IIT
-       ZCSV(JI,JJ)=PTURB_SPP(JI,JJ,1,NCHF)
+       ZCSV(JI,JJ)=PTURB_SPP(JI, JJ, IKT, NCHF)
      ENDDO
   ENDDO
 ENDIF
